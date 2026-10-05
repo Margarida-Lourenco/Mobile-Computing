@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../models/opportunity.dart';
 import '../theme/app_theme.dart';
 import '../widgets/icon_box.dart';
-import '../widgets/opportunity_card.dart';
 import '../widgets/section_title.dart';
 
 class MapScreen extends StatelessWidget {

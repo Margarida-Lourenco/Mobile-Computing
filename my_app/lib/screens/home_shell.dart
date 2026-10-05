@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import '../data/sample_opportunities.dart';
 import '../models/opportunity.dart';
-import '../theme/app_theme.dart';
-import '../widgets/app_sheet.dart';
 import '../widgets/bottom_nav.dart';
 import '../widgets/header.dart';
 import '../widgets/sheets/area_picker_sheet.dart';

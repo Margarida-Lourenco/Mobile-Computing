@@ -84,7 +84,7 @@ class DiscoverScreen extends StatelessWidget {
             child: Icon(
               Icons.groups_rounded,
               size: 150,
-              color: Colors.white.withOpacity(.25),
+              color: Colors.white.withValues(alpha: .25),
             ),
           ),
           Column(
@@ -96,7 +96,7 @@ class DiscoverScreen extends StatelessWidget {
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(.55),
+                  color: Colors.white.withValues(alpha: .55),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: const Row(
