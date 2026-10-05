@@ -1,17 +1,59 @@
-# my_app
+# Göod Together - Flutter
 
-A new Flutter project.
+This is the refactored Flutter version of the Figma Make volunteering app.
 
-## Getting Started
+## Project structure
 
-This project is a starting point for a Flutter application.
+```text
+lib/
+├── main.dart
+├── data/
+│   └── sample_opportunities.dart
+├── models/
+│   └── opportunity.dart
+├── theme/
+│   └── app_theme.dart
+├── screens/
+│   ├── home_shell.dart
+│   ├── discover_screen.dart
+│   ├── map_screen.dart
+│   └── my_page_screen.dart
+└── widgets/
+    ├── app_sheet.dart
+    ├── bottom_nav.dart
+    ├── category_chips.dart
+    ├── empty_state.dart
+    ├── header.dart
+    ├── icon_box.dart
+    ├── opportunity_card.dart
+    ├── search_box.dart
+    ├── section_title.dart
+    ├── small_kicker.dart
+    └── sheets/
+        ├── area_picker_sheet.dart
+        ├── invite_sheet.dart
+        ├── opportunity_details_sheet.dart
+        ├── post_opportunity_sheet.dart
+        └── rewards_sheet.dart
+```
 
-A few resources to get you started if this is your first Flutter project:
+## Run
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+```bash
+flutter pub get
+flutter run
+```
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Architecture
+
+`HomeShell` owns the app's temporary UI state and coordinates the screens.
+
+Screens are responsible for page layouts.
+
+Widgets are reusable UI components.
+
+Sheets contain modal flows such as posting, inviting, rewards, area selection,
+and opportunity details.
+
+The app currently uses local sample data. It is ready to connect to a backend
+later without putting API code directly into the UI widgets.
