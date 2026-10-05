@@ -4,12 +4,14 @@ import '../theme/app_theme.dart';
 class AppHeader extends StatelessWidget {
   final bool isMyPage;
   final String area;
+  final String firstName;
   final VoidCallback onArea;
 
   const AppHeader({
     super.key,
     required this.isMyPage,
     required this.area,
+    required this.firstName,
     required this.onArea,
   });
 
@@ -30,7 +32,9 @@ class AppHeader extends StatelessWidget {
                 ),
               ),
               Text(
-                isMyPage ? 'My Page' : 'Hej, Linnea',
+                isMyPage ? 'My Page' : 'Hej, $firstName',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
                   fontSize: 25,
                   fontWeight: FontWeight.w900,
@@ -43,6 +47,7 @@ class AppHeader extends StatelessWidget {
           onTap: onArea,
           borderRadius: BorderRadius.circular(15),
           child: Container(
+            constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
             padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 7),
             decoration: BoxDecoration(
               color: Colors.white,
@@ -62,12 +67,12 @@ class AppHeader extends StatelessWidget {
                   children: [
                     const Text(
                       'Your area',
-                      style: TextStyle(fontSize: 8, color: AppColors.muted),
+                      style: TextStyle(fontSize: 12, color: AppColors.muted),
                     ),
                     Text(
                       area,
                       style: const TextStyle(
-                        fontSize: 11,
+                        fontSize: 12,
                         fontWeight: FontWeight.w800,
                       ),
                     ),

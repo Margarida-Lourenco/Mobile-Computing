@@ -13,7 +13,12 @@ class RewardsSheet extends StatelessWidget {
       ['First Step', 'Completed your first activity', Icons.auto_awesome, true],
       ['Helping Hand', 'Shared 3 hours of your time', Icons.favorite, true],
       ['Team Player', 'Invited a friend to help', Icons.people_outline, false],
-      ['Local Hero', 'Complete 5 local activities', Icons.location_on_outlined, false],
+      [
+        'Local Hero',
+        'Complete 5 local activities',
+        Icons.location_on_outlined,
+        false
+      ],
     ];
 
     return AppSheet(
@@ -49,7 +54,7 @@ class RewardsSheet extends StatelessWidget {
           const SizedBox(height: 6),
           const Text(
             '3 of 5 activities · 2 more to become a Local Hero',
-            style: TextStyle(fontSize: 11, color: AppColors.muted),
+            style: TextStyle(fontSize: 12, color: AppColors.muted),
           ),
           const SizedBox(height: 22),
           ...badges.map(
@@ -82,7 +87,7 @@ class RewardsSheet extends StatelessWidget {
                           Text(
                             badge[1] as String,
                             style: const TextStyle(
-                              fontSize: 11,
+                              fontSize: 12,
                               color: AppColors.muted,
                             ),
                           ),
@@ -99,7 +104,7 @@ class RewardsSheet extends StatelessWidget {
                       const Text(
                         'In progress',
                         style: TextStyle(
-                          fontSize: 10,
+                          fontSize: 12,
                           color: AppColors.muted,
                         ),
                       ),

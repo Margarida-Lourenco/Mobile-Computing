@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../data/sample_opportunities.dart';
 import '../models/opportunity.dart';
-import '../theme/app_theme.dart';
-import '../widgets/app_sheet.dart';
 import '../widgets/bottom_nav.dart';
 import '../widgets/header.dart';
 import '../widgets/sheets/area_picker_sheet.dart';
@@ -11,6 +10,7 @@ import '../widgets/sheets/opportunity_details_sheet.dart';
 import '../widgets/sheets/post_opportunity_sheet.dart';
 import '../widgets/sheets/rewards_sheet.dart';
 import 'discover_screen.dart';
+import 'edit_info_screen.dart';
 import 'map_screen.dart';
 import 'my_page_screen.dart';
 
@@ -31,6 +31,35 @@ class _HomeShellState extends State<HomeShell> {
   String category = 'All';
   String area = 'Majorna';
   int navIndex = 0;
+  ProfileInfo profile = const ProfileInfo(
+      name: 'Linnea Mårtensson', location: 'Gothenburg, Sweden');
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile();
+  }
+
+  Future<void> _loadProfile() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    setState(() => profile = ProfileInfo(
+          name: prefs.getString('profile_name') ?? profile.name,
+          location: prefs.getString('profile_location') ?? profile.location,
+        ));
+  }
+
+  Future<void> _editProfile() async {
+    final result = await Navigator.push<ProfileInfo>(
+      context,
+      MaterialPageRoute(builder: (_) => EditInfoScreen(profile: profile)),
+    );
+    if (result == null || !mounted) return;
+    setState(() => profile = result);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('profile_name', result.name);
+    await prefs.setString('profile_location', result.location);
+  }
 
   @override
   void dispose() {
@@ -74,6 +103,7 @@ class _HomeShellState extends State<HomeShell> {
                         AppHeader(
                           isMyPage: navIndex == 3,
                           area: area,
+                          firstName: profile.firstName,
                           onArea: _showAreaPicker,
                         ),
                         const SizedBox(height: 2),
@@ -99,6 +129,7 @@ class _HomeShellState extends State<HomeShell> {
       case 1:
         return MapScreen(
           opportunities: filtered,
+          area: area,
           onOpen: _showDetails,
         );
       case 3:
@@ -107,6 +138,8 @@ class _HomeShellState extends State<HomeShell> {
           joined: joined,
           favorites: favorites,
           posted: posted,
+          profile: profile,
+          onEditInfo: _editProfile,
           onOpen: _showDetails,
           onFavorite: _toggleFavorite,
           onRewards: _showRewards,
@@ -139,9 +172,7 @@ class _HomeShellState extends State<HomeShell> {
 
   void _toggleFavorite(int id) {
     setState(() {
-      favorites.contains(id)
-          ? favorites.remove(id)
-          : favorites.add(id);
+      favorites.contains(id) ? favorites.remove(id) : favorites.add(id);
     });
   }
 
@@ -164,6 +195,7 @@ class _HomeShellState extends State<HomeShell> {
                 ? joined.remove(item.id)
                 : joined.add(item.id);
           });
+          Navigator.pop(context);
         },
         onInvite: () {
           Navigator.pop(context);

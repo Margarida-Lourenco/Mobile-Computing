@@ -25,8 +25,8 @@ class SectionTitle extends StatelessWidget {
               Text(
                 kicker,
                 style: const TextStyle(
-                  fontSize: 10,
-                  color: AppColors.blue,
+                  fontSize: 12,
+                  color: AppColors.darkBlue,
                   fontWeight: FontWeight.w800,
                   letterSpacing: 1.2,
                 ),

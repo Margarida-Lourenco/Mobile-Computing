@@ -46,7 +46,7 @@ class OpportunityDetailsSheet extends StatelessWidget {
           Text(
             item.organization.toUpperCase(),
             style: const TextStyle(
-              fontSize: 10,
+              fontSize: 12,
               color: AppColors.muted,
               fontWeight: FontWeight.w800,
             ),
@@ -78,27 +78,29 @@ class OpportunityDetailsSheet extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          Row(
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
             children: [
               const Icon(
                 Icons.people_outline,
                 size: 19,
                 color: AppColors.darkBlue,
               ),
-              const SizedBox(width: 5),
               Text(
                 '${item.spots} spots left',
                 style: const TextStyle(fontWeight: FontWeight.w700),
               ),
-              const SizedBox(width: 15),
               const Text(
                 'No experience needed',
-                style: TextStyle(fontSize: 11, color: AppColors.muted),
+                style: TextStyle(fontSize: 12, color: AppColors.muted),
               ),
             ],
           ),
           const SizedBox(height: 20),
-          Row(
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
             children: [
               IconButton.filledTonal(
                 onPressed: onFavorite,
@@ -106,18 +108,14 @@ class OpportunityDetailsSheet extends StatelessWidget {
                   isFavorite ? Icons.favorite : Icons.favorite_border,
                 ),
               ),
-              const SizedBox(width: 8),
               OutlinedButton.icon(
                 onPressed: onInvite,
                 icon: const Icon(Icons.share_outlined),
                 label: const Text('Invite'),
               ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: FilledButton(
-                  onPressed: onJoin,
-                  child: Text(isJoined ? '✓ Joined' : 'I want to help'),
-                ),
+              FilledButton(
+                onPressed: onJoin,
+                child: Text(isJoined ? '✓ Joined' : 'I want to help'),
               ),
             ],
           ),
@@ -134,7 +132,7 @@ class OpportunityDetailsSheet extends StatelessWidget {
         const SizedBox(width: 5),
         Text(
           text,
-          style: const TextStyle(fontSize: 11, color: AppColors.muted),
+          style: const TextStyle(fontSize: 12, color: AppColors.muted),
         ),
       ],
     );

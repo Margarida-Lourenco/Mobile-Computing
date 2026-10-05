@@ -12,6 +12,8 @@ class Opportunity {
   final String description;
   final int spots;
   final IconData icon;
+  final double? latitude;
+  final double? longitude;
 
   const Opportunity({
     required this.id,
@@ -25,5 +27,7 @@ class Opportunity {
     required this.description,
     required this.spots,
     required this.icon,
+    this.latitude,
+    this.longitude,
   });
 }

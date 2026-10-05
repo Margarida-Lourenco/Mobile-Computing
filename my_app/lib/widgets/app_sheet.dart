@@ -9,7 +9,10 @@ class AppSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: EdgeInsets.fromLTRB(
-        20, 10, 20, 20 + MediaQuery.of(context).viewInsets.bottom,
+        20,
+        10,
+        20,
+        20 + MediaQuery.of(context).viewInsets.bottom,
       ),
       decoration: const BoxDecoration(
         color: Color(0xFFF9FCFD),

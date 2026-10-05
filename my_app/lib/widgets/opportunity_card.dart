@@ -40,7 +40,7 @@ class OpportunityCard extends StatelessWidget {
                   Text(
                     item.organization.toUpperCase(),
                     style: const TextStyle(
-                      fontSize: 9,
+                      fontSize: 12,
                       color: AppColors.muted,
                       fontWeight: FontWeight.w800,
                       letterSpacing: .4,
@@ -69,7 +69,7 @@ class OpportunityCard extends StatelessWidget {
                         child: Text(
                           item.date,
                           style: const TextStyle(
-                            fontSize: 10,
+                            fontSize: 12,
                             color: AppColors.muted,
                           ),
                         ),
@@ -85,7 +85,7 @@ class OpportunityCard extends StatelessWidget {
                         child: Text(
                           item.time,
                           style: const TextStyle(
-                            fontSize: 10,
+                            fontSize: 12,
                             color: AppColors.muted,
                           ),
                         ),
@@ -96,7 +96,7 @@ class OpportunityCard extends StatelessWidget {
                   Text(
                     '${item.place} · ${item.distance}',
                     style: const TextStyle(
-                      fontSize: 10,
+                      fontSize: 12,
                       color: AppColors.muted,
                     ),
                   ),

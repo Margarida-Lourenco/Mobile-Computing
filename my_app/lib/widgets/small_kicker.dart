@@ -11,8 +11,8 @@ class SmallKicker extends StatelessWidget {
     return Text(
       text,
       style: const TextStyle(
-        fontSize: 10,
-        color: AppColors.blue,
+        fontSize: 12,
+        color: AppColors.darkBlue,
         fontWeight: FontWeight.w900,
         letterSpacing: 1.1,
       ),

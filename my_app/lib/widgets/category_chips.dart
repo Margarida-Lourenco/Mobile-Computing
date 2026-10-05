@@ -24,9 +24,11 @@ class CategoryChips extends StatelessWidget {
                 child: ChoiceChip(
                   label: Text(
                     category,
-                    style: const TextStyle(
-                      fontSize: 11,
+                    style: TextStyle(
+                      fontSize: 12,
                       fontWeight: FontWeight.w700,
+                      color:
+                          selected == category ? Colors.white : AppColors.navy,
                     ),
                   ),
                   selected: selected == category,
@@ -35,9 +37,8 @@ class CategoryChips extends StatelessWidget {
                   backgroundColor: Colors.transparent,
                   side: const BorderSide(color: Color(0xFFCDDfea)),
                   labelStyle: TextStyle(
-                    color: selected == category
-                        ? Colors.white
-                        : AppColors.muted,
+                    color:
+                        selected == category ? Colors.white : AppColors.muted,
                   ),
                 ),
               ),

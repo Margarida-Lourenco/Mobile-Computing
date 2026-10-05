@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:latlong2/latlong.dart';
+import '../../screens/pick_location_screen.dart';
 import '../../models/opportunity.dart';
 import '../../theme/app_theme.dart';
 import '../app_sheet.dart';
@@ -26,6 +28,7 @@ class _PostOpportunitySheetState extends State<PostOpportunitySheet> {
   String category = 'Community';
   DateTime? date;
   TimeOfDay? start;
+  LatLng? mapPoint;
 
   @override
   void dispose() {
@@ -105,6 +108,23 @@ class _PostOpportunitySheetState extends State<PostOpportunitySheet> {
             ),
             const SizedBox(height: 8),
             _field('Location', place, 'Street or meeting point'),
+            OutlinedButton.icon(
+              onPressed: () async {
+                final result = await Navigator.push<LatLng>(
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) =>
+                            PickLocationScreen(initialPoint: mapPoint)));
+                if (result != null && mounted) {
+                  setState(() => mapPoint = result);
+                }
+              },
+              icon: const Icon(Icons.location_on_outlined),
+              label: Text(mapPoint == null
+                  ? 'Place map pin'
+                  : 'Map pin placed · change'),
+            ),
+            const SizedBox(height: 12),
             _field('Volunteers', spots),
             _field(
               'What will volunteers do?',
@@ -177,7 +197,11 @@ class _PostOpportunitySheetState extends State<PostOpportunitySheet> {
     if (title.text.trim().isEmpty ||
         organization.text.trim().isEmpty ||
         place.text.trim().isEmpty ||
-        description.text.trim().isEmpty) {
+        description.text.trim().isEmpty ||
+        mapPoint == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text(
+              'Complete the details and place a map pin before publishing.')));
       return;
     }
 
@@ -185,9 +209,7 @@ class _PostOpportunitySheetState extends State<PostOpportunitySheet> {
       id: DateTime.now().millisecondsSinceEpoch,
       organization: organization.text.trim(),
       title: title.text.trim(),
-      date: date == null
-          ? 'New'
-          : '${date!.day} ${_month(date!.month)}',
+      date: date == null ? 'New' : '${date!.day} ${_month(date!.month)}',
       time: start == null ? 'Time to be confirmed' : start!.format(context),
       place: place.text.trim(),
       distance: 'New',
@@ -195,6 +217,8 @@ class _PostOpportunitySheetState extends State<PostOpportunitySheet> {
       description: description.text.trim(),
       spots: int.tryParse(spots.text) ?? 4,
       icon: Icons.people_outline_rounded,
+      latitude: mapPoint!.latitude,
+      longitude: mapPoint!.longitude,
     );
 
     widget.onPublished(opportunity);

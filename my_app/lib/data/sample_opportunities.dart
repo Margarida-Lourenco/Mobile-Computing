@@ -4,6 +4,8 @@ import '../models/opportunity.dart';
 const sampleOpportunities = <Opportunity>[
   Opportunity(
     id: 1,
+    latitude: 57.7068,
+    longitude: 11.9673,
     organization: 'Stadsmissionen',
     title: 'Serve warm lunch',
     date: 'Today',
@@ -18,6 +20,8 @@ const sampleOpportunities = <Opportunity>[
   ),
   Opportunity(
     id: 2,
+    latitude: 57.6906,
+    longitude: 11.9514,
     organization: 'Slottsskogen vänner',
     title: 'Park clean-up walk',
     date: 'Sat, 18 May',
@@ -32,6 +36,8 @@ const sampleOpportunities = <Opportunity>[
   ),
   Opportunity(
     id: 3,
+    latitude: 57.6952,
+    longitude: 11.9187,
     organization: 'Språkvänner GBG',
     title: 'Practice Swedish over fika',
     date: 'Sun, 19 May',

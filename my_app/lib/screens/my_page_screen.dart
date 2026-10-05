@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import '../models/opportunity.dart';
 import '../theme/app_theme.dart';
 import '../widgets/empty_state.dart';
-import '../widgets/icon_box.dart';
 import '../widgets/opportunity_card.dart';
 import '../widgets/section_title.dart';
+import 'edit_info_screen.dart';
 
 class MyPageScreen extends StatefulWidget {
   final List<Opportunity> opportunities;
@@ -15,6 +15,8 @@ class MyPageScreen extends StatefulWidget {
   final ValueChanged<int> onFavorite;
   final VoidCallback onRewards;
   final VoidCallback onPost;
+  final ProfileInfo profile;
+  final VoidCallback onEditInfo;
 
   const MyPageScreen({
     super.key,
@@ -26,6 +28,8 @@ class MyPageScreen extends StatefulWidget {
     required this.onFavorite,
     required this.onRewards,
     required this.onPost,
+    required this.profile,
+    required this.onEditInfo,
   });
 
   @override
@@ -35,7 +39,7 @@ class MyPageScreen extends StatefulWidget {
 class _MyPageScreenState extends State<MyPageScreen> {
   String activityTab = 'Volunteering';
   bool calendar = true;
-  int selectedDay = 18;
+  DateTime selectedDate = DateTime.now();
 
   @override
   Widget build(BuildContext context) {
@@ -55,41 +59,43 @@ class _MyPageScreenState extends State<MyPageScreen> {
         const SizedBox(height: 20),
         Row(
           children: [
-            const CircleAvatar(
+            CircleAvatar(
               radius: 30,
               backgroundColor: AppColors.paleGreen,
               child: Text(
-                'LM',
-                style: TextStyle(
+                widget.profile.initials,
+                style: const TextStyle(
                   color: AppColors.navy,
                   fontWeight: FontWeight.w900,
                 ),
               ),
             ),
             const SizedBox(width: 12),
-            const Expanded(
+            Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
+                  const Text(
                     'Göod Together member',
-                    style: TextStyle(fontSize: 10, color: AppColors.muted),
+                    style: TextStyle(fontSize: 12, color: AppColors.muted),
                   ),
                   Text(
-                    'Linnea Mårtensson',
-                    style: TextStyle(
+                    widget.profile.name,
+                    style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w900,
                     ),
                   ),
                   Text(
-                    'Gothenburg, Sweden',
-                    style: TextStyle(fontSize: 11, color: AppColors.muted),
+                    widget.profile.location,
+                    style:
+                        const TextStyle(fontSize: 12, color: AppColors.muted),
                   ),
                 ],
               ),
             ),
-            TextButton(onPressed: () {}, child: const Text('Edit info')),
+            TextButton(
+                onPressed: widget.onEditInfo, child: const Text('Edit info')),
           ],
         ),
         const SizedBox(height: 15),
@@ -103,9 +109,9 @@ class _MyPageScreenState extends State<MyPageScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _stat(widget.joined.length, 'Upcoming'),
-              _stat(widget.favorites.length, 'Favorites'),
-              _stat(widget.posted.length, 'Posted'),
+              Expanded(child: _stat(widget.joined.length, 'Upcoming')),
+              Expanded(child: _stat(widget.favorites.length, 'Favorites')),
+              Expanded(child: _stat(widget.posted.length, 'Posted')),
             ],
           ),
         ),
@@ -127,7 +133,7 @@ class _MyPageScreenState extends State<MyPageScreen> {
                       Text(
                         'LEVEL 2 · KIND NEIGHBOR',
                         style: TextStyle(
-                          fontSize: 9,
+                          fontSize: 12,
                           color: AppColors.darkBlue,
                           fontWeight: FontWeight.w800,
                         ),
@@ -139,7 +145,7 @@ class _MyPageScreenState extends State<MyPageScreen> {
                       ),
                       Text(
                         '2 badges earned · 2 more within reach',
-                        style: TextStyle(fontSize: 10, color: AppColors.muted),
+                        style: TextStyle(fontSize: 12, color: AppColors.muted),
                       ),
                     ],
                   ),
@@ -156,32 +162,36 @@ class _MyPageScreenState extends State<MyPageScreen> {
           title: 'Your activity',
         ),
         const SizedBox(height: 12),
-        SegmentedButton<String>(
-          segments: const [
-            ButtonSegment(
-              value: 'Volunteering',
-              label: Text('Volunteering'),
-            ),
-            ButtonSegment(value: 'Posted', label: Text('Posted')),
-            ButtonSegment(value: 'Favorites', label: Text('Favorites')),
-          ],
-          selected: {activityTab},
-          onSelectionChanged: (selection) {
-            setState(() => activityTab = selection.first);
-          },
-        ),
+        SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: SegmentedButton<String>(
+              segments: const [
+                ButtonSegment(
+                  value: 'Volunteering',
+                  label: Text('Volunteering'),
+                ),
+                ButtonSegment(value: 'Posted', label: Text('Posted')),
+                ButtonSegment(value: 'Favorites', label: Text('Favorites')),
+              ],
+              selected: {activityTab},
+              onSelectionChanged: (selection) {
+                setState(() => activityTab = selection.first);
+              },
+            )),
         if (activityTab == 'Volunteering') ...[
           const SizedBox(height: 14),
-          SegmentedButton<bool>(
-            segments: const [
-              ButtonSegment(value: false, label: Text('Agenda')),
-              ButtonSegment(value: true, label: Text('Calendar')),
-            ],
-            selected: {calendar},
-            onSelectionChanged: (selection) {
-              setState(() => calendar = selection.first);
-            },
-          ),
+          SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: SegmentedButton<bool>(
+                segments: const [
+                  ButtonSegment(value: false, label: Text('Agenda')),
+                  ButtonSegment(value: true, label: Text('Calendar')),
+                ],
+                selected: {calendar},
+                onSelectionChanged: (selection) {
+                  setState(() => calendar = selection.first);
+                },
+              )),
           if (calendar) _calendar(),
           const SizedBox(height: 18),
           Row(
@@ -195,7 +205,7 @@ class _MyPageScreenState extends State<MyPageScreen> {
                   borderRadius: BorderRadius.circular(13),
                 ),
                 child: Text(
-                  '$selectedDay',
+                  '${selectedDate.day}',
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w900,
@@ -203,19 +213,21 @@ class _MyPageScreenState extends State<MyPageScreen> {
                 ),
               ),
               const SizedBox(width: 11),
-              const Column(
+              Expanded(
+                  child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'May · 1 shift',
-                    style: TextStyle(fontWeight: FontWeight.w800),
+                    '${_month(selectedDate.month)} ${selectedDate.year} · ${joinedItems.length} shifts',
+                    maxLines: 2,
+                    style: const TextStyle(fontWeight: FontWeight.w800),
                   ),
-                  Text(
+                  const Text(
                     'Gothenburg',
-                    style: TextStyle(fontSize: 11, color: AppColors.muted),
+                    style: TextStyle(fontSize: 12, color: AppColors.muted),
                   ),
                 ],
-              ),
+              )),
             ],
           ),
           const SizedBox(height: 10),
@@ -270,7 +282,8 @@ class _MyPageScreenState extends State<MyPageScreen> {
         ),
         Text(
           label,
-          style: const TextStyle(fontSize: 10, color: AppColors.muted),
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 12, color: AppColors.muted),
         ),
       ],
     );
@@ -279,89 +292,37 @@ class _MyPageScreenState extends State<MyPageScreen> {
   Widget _calendar() {
     return Container(
       margin: const EdgeInsets.only(top: 14),
-      padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
         color: Colors.white,
         border: Border.all(color: AppColors.border),
         borderRadius: BorderRadius.circular(18),
       ),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              IconButton(
-                onPressed: () {},
-                icon: const Icon(Icons.chevron_left),
-              ),
-              const Text(
-                'May 2025',
-                style: TextStyle(fontWeight: FontWeight.w800),
-              ),
-              IconButton(
-                onPressed: () {},
-                icon: const Icon(Icons.chevron_right),
-              ),
-            ],
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: ['M', 'T', 'W', 'T', 'F', 'S', 'S']
-                .map(
-                  (day) => Text(
-                    day,
-                    style: const TextStyle(
-                      fontSize: 10,
-                      color: AppColors.muted,
-                    ),
-                  ),
-                )
-                .toList(),
-          ),
-          const SizedBox(height: 5),
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: 34,
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 7,
-              mainAxisExtent: 38,
-            ),
-            itemBuilder: (_, index) {
-              final day = index < 3 ? null : index - 2;
-              if (day == null) return const SizedBox();
-
-              final selected = day == selectedDay;
-              return GestureDetector(
-                onTap: () => setState(() => selectedDay = day),
-                child: Center(
-                  child: Container(
-                    width: 35,
-                    height: 35,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: selected
-                          ? AppColors.navy
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      '$day',
-                      style: TextStyle(
-                        color: selected
-                            ? Colors.white
-                            : AppColors.muted,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            },
-          ),
-        ],
-      ),
+      child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: SizedBox(
+              width: 350,
+              child: CalendarDatePicker(
+                initialDate: selectedDate,
+                firstDate: DateTime(2020),
+                lastDate: DateTime(2035),
+                onDateChanged: (date) => setState(() => selectedDate = date),
+              ))),
     );
   }
+
+  String _month(int month) => const [
+        '',
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec',
+      ][month];
 }

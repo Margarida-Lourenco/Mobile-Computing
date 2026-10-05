@@ -27,7 +27,7 @@ class SearchBox extends StatelessWidget {
           border: InputBorder.none,
           prefixIcon: Icon(Icons.search, color: AppColors.muted),
           hintText: 'What would you like to help with?',
-          hintStyle: TextStyle(color: Color(0xFF91A4AF), fontSize: 12),
+          hintStyle: TextStyle(color: AppColors.muted, fontSize: 12),
         ),
       ),
     );

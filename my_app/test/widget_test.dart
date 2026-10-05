@@ -1,30 +1,130 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
+import 'package:flutter_map/flutter_map.dart';
+import 'package:good_together/screens/edit_info_screen.dart';
+import 'package:good_together/theme/app_theme.dart';
+import 'package:good_together/widgets/category_chips.dart';
 import 'package:good_together/main.dart';
+import 'package:good_together/data/sample_opportunities.dart';
+import 'package:good_together/models/opportunity.dart';
+import 'package:good_together/screens/map_screen.dart';
+import 'package:good_together/screens/pick_location_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
+  testWidgets('edit info saves the visible profile details', (tester) async {
+    ProfileInfo? saved;
+    await tester.pumpWidget(MaterialApp(
+        theme: AppTheme.light,
+        home: Builder(builder: (context) {
+          return Scaffold(
+              body: TextButton(
+            onPressed: () async {
+              saved = await Navigator.push<ProfileInfo>(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => const EditInfoScreen(
+                          profile: ProfileInfo(
+                              name: 'Linnea Mårtensson',
+                              location: 'Gothenburg, Sweden'))));
+            },
+            child: const Text('Edit info'),
+          ));
+        })));
+    await tester.tap(find.text('Edit info'));
+    await tester.pumpAndSettle();
+    expect(
+        tester
+            .getSize(find.widgetWithText(FilledButton, 'Save changes'))
+            .height,
+        greaterThanOrEqualTo(44));
+    await tester.enterText(find.byType(TextFormField).at(0), 'Alex Andersson');
+    await tester.enterText(find.byType(TextFormField).at(1), 'Majorna, Sweden');
+    await tester.tap(find.text('Save changes'));
+    await tester.pumpAndSettle();
+    expect(saved?.name, 'Alex Andersson');
+    expect(saved?.location, 'Majorna, Sweden');
+  });
+
+  testWidgets('category chips have readable labels and 44-pixel targets',
+      (tester) async {
+    await tester.pumpWidget(MaterialApp(
+        theme: AppTheme.light,
+        home: Scaffold(
+            body: CategoryChips(selected: 'All', onSelected: (_) {}))));
+    for (final chip in tester.widgetList<ChoiceChip>(find.byType(ChoiceChip))) {
+      final finder = find.byWidget(chip);
+      expect(tester.getSize(finder).width, greaterThanOrEqualTo(44));
+      expect(tester.getSize(finder).height, greaterThanOrEqualTo(44));
+      final label = chip.label as Text;
+      expect(label.style!.fontSize, greaterThanOrEqualTo(12));
+    }
+  });
+
+  testWidgets('main screens fit a narrow phone and profile edit opens',
+      (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    tester.view.physicalSize = const Size(320, 720);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
     await tester.pumpWidget(const GoodTogetherApp());
-
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
-
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
     await tester.pump();
+    expect(tester.takeException(), isNull);
+    expect(
+        tester
+            .getSize(find.widgetWithText(TextButton, 'See your impact'))
+            .height,
+        greaterThanOrEqualTo(44));
+    await tester.tap(find.text('My Page').last);
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    final editButton = find.widgetWithText(TextButton, 'Edit info');
+    expect(tester.getSize(editButton).height, greaterThanOrEqualTo(44));
+    expect(tester.getSize(editButton).width, greaterThanOrEqualTo(44));
+    await tester.tap(editButton);
+    await tester.pumpAndSettle();
+    expect(find.text('Save changes'), findsOneWidget);
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Discover').last);
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Serve warm lunch').first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Serve warm lunch').first);
+    await tester.pumpAndSettle();
+    expect(find.text('3 spots left'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+  testWidgets('map markers open their matching opportunity', (tester) async {
+    Opportunity? opened;
+    await tester.pumpWidget(MaterialApp(
+        theme: AppTheme.light,
+        home: Scaffold(
+            body: MapScreen(
+          area: 'Majorna',
+          opportunities: sampleOpportunities,
+          onOpen: (item) => opened = item,
+        ))));
+    await tester.pump();
+    final marker = find.byTooltip('Serve warm lunch');
+    expect(tester.getSize(marker).width, greaterThanOrEqualTo(44));
+    expect(tester.getSize(marker).height, greaterThanOrEqualTo(44));
+    await tester.tap(marker);
+    expect(opened?.title, 'Serve warm lunch');
+  });
+
+  testWidgets('a new opportunity can select a map pin', (tester) async {
+    await tester.pumpWidget(
+        MaterialApp(theme: AppTheme.light, home: const PickLocationScreen()));
+    await tester.pump();
+    final save = find.widgetWithText(FilledButton, 'Use this location');
+    expect(tester.widget<FilledButton>(save).onPressed, isNull);
+    await tester.tapAt(tester.getCenter(find.byType(FlutterMap)));
+    await tester.pumpAndSettle();
+    expect(tester.widget<FilledButton>(save).onPressed, isNotNull);
+    expect(tester.getSize(save).height, greaterThanOrEqualTo(44));
   });
 }

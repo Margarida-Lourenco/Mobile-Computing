@@ -67,7 +67,7 @@ class EmptyAction extends StatelessWidget {
           Text(
             body,
             textAlign: TextAlign.center,
-            style: const TextStyle(color: AppColors.muted, fontSize: 11),
+            style: const TextStyle(color: AppColors.muted, fontSize: 12),
           ),
           const SizedBox(height: 13),
           FilledButton(onPressed: onPressed, child: Text(action)),

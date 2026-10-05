@@ -40,7 +40,7 @@ class AreaPickerSheet extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           const Text(
-            'We’ll prioritize opportunities closest to this neighborhood.',
+            'The map will open around this neighborhood.',
             style: TextStyle(color: AppColors.muted),
           ),
           const SizedBox(height: 15),
@@ -62,7 +62,7 @@ class AreaPickerSheet extends StatelessWidget {
               ),
               subtitle: Text(
                 entry.value,
-                style: const TextStyle(fontSize: 11),
+                style: const TextStyle(fontSize: 12),
               ),
               trailing: Icon(
                 currentArea == entry.key

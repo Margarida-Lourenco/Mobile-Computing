@@ -17,7 +17,9 @@ lib/
 │   ├── home_shell.dart
 │   ├── discover_screen.dart
 │   ├── map_screen.dart
-│   └── my_page_screen.dart
+│   ├── my_page_screen.dart
+│   ├── edit_info_screen.dart
+│   └── pick_location_screen.dart
 └── widgets/
     ├── app_sheet.dart
     ├── bottom_nav.dart
@@ -46,7 +48,7 @@ flutter run
 
 ## Architecture
 
-`HomeShell` owns the app's temporary UI state and coordinates the screens.
+`HomeShell` owns the app's opportunity UI state and coordinates the screens. Profile name and location are saved locally on the device.
 
 Screens are responsible for page layouts.
 
@@ -54,6 +56,8 @@ Widgets are reusable UI components.
 
 Sheets contain modal flows such as posting, inviting, rewards, area selection,
 and opportunity details.
+
+The map uses OpenStreetMap tiles and needs an internet connection. The location button asks for device location permission only when tapped. Sample opportunities have map coordinates; publishing a new one now requires selecting a meeting-point pin. Before a public launch, check the [OpenStreetMap tile usage policy](https://operations.osmfoundation.org/policies/tiles) and arrange a suitable tile provider if traffic grows.
 
 The app currently uses local sample data. It is ready to connect to a backend
 later without putting API code directly into the UI widgets.
