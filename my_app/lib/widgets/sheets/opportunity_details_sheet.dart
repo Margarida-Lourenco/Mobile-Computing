@@ -3,9 +3,12 @@ import '../../models/opportunity.dart';
 import '../../theme/app_theme.dart';
 import '../app_sheet.dart';
 import '../icon_box.dart';
+import '../event_photo.dart';
 
 class OpportunityDetailsSheet extends StatelessWidget {
   final Opportunity item;
+  final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
   final bool isFavorite;
   final bool isJoined;
   final VoidCallback onFavorite;
@@ -15,6 +18,8 @@ class OpportunityDetailsSheet extends StatelessWidget {
   const OpportunityDetailsSheet({
     super.key,
     required this.item,
+    this.onEdit,
+    this.onDelete,
     required this.isFavorite,
     required this.isJoined,
     required this.onFavorite,
@@ -42,6 +47,12 @@ class OpportunityDetailsSheet extends StatelessWidget {
               ),
             ],
           ),
+          if (item.coverImageUrl != null)
+            EventPhoto(url: item.coverImageUrl!, width: double.infinity),
+          if (onEdit != null)
+            TextButton(onPressed: onEdit, child: const Text('Edit event')),
+          if (onDelete != null)
+            TextButton(onPressed: onDelete, child: const Text('Delete event')),
           const SizedBox(height: 15),
           Text(
             item.organization.toUpperCase(),
@@ -59,6 +70,12 @@ class OpportunityDetailsSheet extends StatelessWidget {
               fontWeight: FontWeight.w900,
             ),
           ),
+          if (item.coverImageUrl != null)
+            EventPhoto(url: item.coverImageUrl!, width: double.infinity),
+          if (onEdit != null)
+            TextButton(onPressed: onEdit, child: const Text('Edit event')),
+          if (onDelete != null)
+            TextButton(onPressed: onDelete, child: const Text('Delete event')),
           const SizedBox(height: 15),
           Wrap(
             spacing: 14,

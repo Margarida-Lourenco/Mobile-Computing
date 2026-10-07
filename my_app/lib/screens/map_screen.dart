@@ -4,7 +4,6 @@ import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import '../models/opportunity.dart';
 import '../theme/app_theme.dart';
-import '../widgets/icon_box.dart';
 import '../widgets/section_title.dart';
 
 const gothenburg = LatLng(57.7007, 11.9680);

@@ -8,11 +8,11 @@ import 'edit_info_screen.dart';
 
 class MyPageScreen extends StatefulWidget {
   final List<Opportunity> opportunities;
-  final Set<int> joined;
-  final Set<int> favorites;
-  final Set<int> posted;
+  final Set<String> joined;
+  final Set<String> favorites;
+  final Set<String> posted;
   final ValueChanged<Opportunity> onOpen;
-  final ValueChanged<int> onFavorite;
+  final ValueChanged<String> onFavorite;
   final VoidCallback onRewards;
   final VoidCallback onPost;
   final ProfileInfo profile;
@@ -62,6 +62,9 @@ class _MyPageScreenState extends State<MyPageScreen> {
             CircleAvatar(
               radius: 30,
               backgroundColor: AppColors.paleGreen,
+              foregroundImage: widget.profile.imageUrl == null
+                  ? null
+                  : NetworkImage(widget.profile.imageUrl!),
               child: Text(
                 widget.profile.initials,
                 style: const TextStyle(

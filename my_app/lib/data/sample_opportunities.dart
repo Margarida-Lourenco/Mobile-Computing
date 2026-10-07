@@ -3,7 +3,7 @@ import '../models/opportunity.dart';
 
 const sampleOpportunities = <Opportunity>[
   Opportunity(
-    id: 1,
+    id: '1',
     latitude: 57.7068,
     longitude: 11.9673,
     organization: 'Stadsmissionen',
@@ -19,7 +19,7 @@ const sampleOpportunities = <Opportunity>[
         'Help set tables, welcome guests, and serve a warm lunch. The team will show you everything when you arrive.',
   ),
   Opportunity(
-    id: 2,
+    id: '2',
     latitude: 57.6906,
     longitude: 11.9514,
     organization: 'Slottsskogen vänner',
@@ -35,7 +35,7 @@ const sampleOpportunities = <Opportunity>[
         'Join a relaxed two-hour walk through Slottsskogen while collecting litter. Gloves, bags, and fika are provided.',
   ),
   Opportunity(
-    id: 3,
+    id: '3',
     latitude: 57.6952,
     longitude: 11.9187,
     organization: 'Språkvänner GBG',
