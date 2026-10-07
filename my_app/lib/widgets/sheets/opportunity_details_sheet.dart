@@ -39,7 +39,7 @@ class OpportunityDetailsSheet extends StatelessWidget {
               IconBox(
                 icon: item.icon,
                 color: AppColors.paleGreen,
-                size: 58,
+                size: AppIconSizes.s58,
               ),
               TextButton(
                 onPressed: () => Navigator.pop(context),
@@ -56,19 +56,12 @@ class OpportunityDetailsSheet extends StatelessWidget {
           const SizedBox(height: 15),
           Text(
             item.organization.toUpperCase(),
-            style: const TextStyle(
-              fontSize: 12,
-              color: AppColors.muted,
-              fontWeight: FontWeight.w800,
-            ),
+            style: AppTextStyles.captionMutedBold,
           ),
           const SizedBox(height: 4),
           Text(
             item.title,
-            style: const TextStyle(
-              fontSize: 26,
-              fontWeight: FontWeight.w900,
-            ),
+            style: AppTextStyles.eventTitle,
           ),
           if (item.coverImageUrl != null)
             EventPhoto(url: item.coverImageUrl!, width: double.infinity),
@@ -89,10 +82,7 @@ class OpportunityDetailsSheet extends StatelessWidget {
           const SizedBox(height: 18),
           Text(
             item.description,
-            style: const TextStyle(
-              color: AppColors.muted,
-              height: 1.45,
-            ),
+            style: AppTextStyles.description,
           ),
           const SizedBox(height: 16),
           Wrap(
@@ -101,16 +91,16 @@ class OpportunityDetailsSheet extends StatelessWidget {
             children: [
               const Icon(
                 Icons.people_outline,
-                size: 19,
+                size: AppIconSizes.s19,
                 color: AppColors.darkBlue,
               ),
               Text(
                 '${item.spots} spots left',
-                style: const TextStyle(fontWeight: FontWeight.w700),
+                style: AppTextStyles.bodyMedium,
               ),
               const Text(
                 'No experience needed',
-                style: TextStyle(fontSize: 12, color: AppColors.muted),
+                style: AppTextStyles.captionMuted,
               ),
             ],
           ),
@@ -145,11 +135,11 @@ class OpportunityDetailsSheet extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 17, color: AppColors.darkBlue),
+        Icon(icon, size: AppIconSizes.s17, color: AppColors.darkBlue),
         const SizedBox(width: 5),
         Text(
           text,
-          style: const TextStyle(fontSize: 12, color: AppColors.muted),
+          style: AppTextStyles.captionMuted,
         ),
       ],
     );

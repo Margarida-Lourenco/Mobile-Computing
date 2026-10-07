@@ -1,3 +1,4 @@
+import '../theme/app_theme.dart';
 import 'package:flutter/material.dart';
 
 class AppSheet extends StatelessWidget {
@@ -15,8 +16,8 @@ class AppSheet extends StatelessWidget {
         20 + MediaQuery.of(context).viewInsets.bottom,
       ),
       decoration: const BoxDecoration(
-        color: Color(0xFFF9FCFD),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        color: AppColors.background,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadii.r28)),
       ),
       child: SafeArea(
         top: false,
@@ -26,10 +27,10 @@ class AppSheet extends StatelessWidget {
               Container(
                 width: 42,
                 height: 4,
-                margin: const EdgeInsets.only(bottom: 8),
+                margin: const EdgeInsets.only(bottom: AppSpacing.s8),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFC2D8E5),
-                  borderRadius: BorderRadius.circular(5),
+                  color: AppColors.sheetHandle,
+                  borderRadius: BorderRadius.circular(AppRadii.r5),
                 ),
               ),
               child,

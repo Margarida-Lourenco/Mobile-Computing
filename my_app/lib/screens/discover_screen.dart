@@ -71,10 +71,10 @@ class DiscoverScreen extends StatelessWidget {
   Widget _impactCard() {
     return Container(
       constraints: const BoxConstraints(minHeight: 205),
-      padding: const EdgeInsets.all(21),
+      padding: const EdgeInsets.all(AppSpacing.s21),
       decoration: BoxDecoration(
         color: AppColors.green,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppRadii.r24),
       ),
       child: Stack(
         children: [
@@ -83,8 +83,8 @@ class DiscoverScreen extends StatelessWidget {
             bottom: -10,
             child: Icon(
               Icons.groups_rounded,
-              size: 150,
-              color: Colors.white.withValues(alpha: .25),
+              size: AppIconSizes.s150,
+              color: AppColors.white.withValues(alpha: .25),
             ),
           ),
           Column(
@@ -92,30 +92,26 @@ class DiscoverScreen extends StatelessWidget {
             children: [
               Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 6,
+                  horizontal: AppSpacing.s10,
+                  vertical: AppSpacing.s6,
                 ),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: .55),
-                  borderRadius: BorderRadius.circular(20),
+                  color: AppColors.white.withValues(alpha: .55),
+                  borderRadius: BorderRadius.circular(AppRadii.r20),
                 ),
                 child: const Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
-                      Icons.auto_awesome,
-                      size: 14,
+                      AppIcons.badge,
+                      size: AppIconSizes.s14,
                       color: AppColors.darkBlue,
                     ),
                     SizedBox(width: 5),
                     Flexible(
                         child: Text(
                       'THIS MONTH’S IMPACT',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.darkBlue,
-                      ),
+                      style: AppTextStyles.captionAccentBold,
                     )),
                   ],
                 ),
@@ -123,11 +119,7 @@ class DiscoverScreen extends StatelessWidget {
               const SizedBox(height: 12),
               const Text(
                 'Gothenburg is showing up.',
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w900,
-                  color: AppColors.navy,
-                ),
+                style: AppTextStyles.heroTitle,
               ),
               const SizedBox(height: 9),
               const Wrap(
@@ -136,11 +128,11 @@ class DiscoverScreen extends StatelessWidget {
                 children: [
                   Text(
                     '428\nhours shared',
-                    style: TextStyle(fontSize: 12, color: AppColors.muted),
+                    style: AppTextStyles.captionMuted,
                   ),
                   Text(
                     '312\nneighbors',
-                    style: TextStyle(fontSize: 12, color: AppColors.muted),
+                    style: AppTextStyles.captionMuted,
                   ),
                 ],
               ),
@@ -150,14 +142,11 @@ class DiscoverScreen extends StatelessWidget {
                 style: TextButton.styleFrom(padding: EdgeInsets.zero),
                 icon: const Text(
                   'See your impact',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.navy,
-                  ),
+                  style: AppTextStyles.actionLabel,
                 ),
                 label: const Icon(
                   Icons.arrow_forward,
-                  size: 16,
+                  size: AppIconSizes.s16,
                   color: AppColors.navy,
                 ),
               ),
@@ -171,20 +160,20 @@ class DiscoverScreen extends StatelessWidget {
   Widget _contributionCard() {
     return InkWell(
       onTap: onRewards,
-      borderRadius: BorderRadius.circular(17),
+      borderRadius: BorderRadius.circular(AppRadii.r17),
       child: Container(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(AppSpacing.s12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.white,
           border: Border.all(color: AppColors.border),
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(AppRadii.r18),
         ),
         child: const Row(
           children: [
             IconBox(
-              icon: Icons.auto_awesome,
+              icon: AppIcons.badge,
               color: AppColors.green,
-              size: 46,
+              size: AppIconSizes.s46,
             ),
             SizedBox(width: 10),
             Expanded(
@@ -193,30 +182,23 @@ class DiscoverScreen extends StatelessWidget {
                 children: [
                   Text(
                     'YOUR CONTRIBUTION',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.darkBlue,
-                    ),
+                    style: AppTextStyles.captionAccentBold,
                   ),
                   Text(
                     '3 hours shared · 2 badges earned',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w800,
-                    ),
+                    style: AppTextStyles.captionBold,
                   ),
                   SizedBox(height: 5),
                   LinearProgressIndicator(
                     value: .6,
                     minHeight: 4,
-                    backgroundColor: Color(0xFFE8F7E3),
+                    backgroundColor: AppColors.progressTrack,
                     valueColor: AlwaysStoppedAnimation(AppColors.darkBlue),
                   ),
                   SizedBox(height: 3),
                   Text(
                     '2 more activities until Local Hero',
-                    style: TextStyle(fontSize: 12, color: AppColors.muted),
+                    style: AppTextStyles.captionMuted,
                   ),
                 ],
               ),

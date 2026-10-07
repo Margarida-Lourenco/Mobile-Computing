@@ -108,7 +108,7 @@ class _MapScreenState extends State<MapScreen> {
       SizedBox(
           height: 390,
           child: ClipRRect(
-              borderRadius: BorderRadius.circular(24),
+              borderRadius: BorderRadius.circular(AppRadii.r24),
               child: Stack(children: [
                 FlutterMap(
                   mapController: controller,
@@ -131,7 +131,7 @@ class _MapScreenState extends State<MapScreen> {
                                   tooltip: item.title,
                                   style: IconButton.styleFrom(
                                       backgroundColor: AppColors.navy,
-                                      foregroundColor: Colors.white),
+                                      foregroundColor: AppColors.white),
                                   onPressed: () => widget.onOpen(item),
                                   icon: Icon(item.icon))),
                       if (userLocation != null)
@@ -140,7 +140,8 @@ class _MapScreenState extends State<MapScreen> {
                             width: 44,
                             height: 44,
                             child: const Icon(Icons.my_location,
-                                color: AppColors.darkBlue, size: 34)),
+                                color: AppColors.darkBlue,
+                                size: AppIconSizes.s34)),
                     ]),
                   ],
                 ),
@@ -151,7 +152,7 @@ class _MapScreenState extends State<MapScreen> {
                       heroTag: 'locate',
                       mini: true,
                       tooltip: 'Use my location',
-                      backgroundColor: Colors.white,
+                      backgroundColor: AppColors.white,
                       foregroundColor: AppColors.navy,
                       onPressed: _locate,
                       child: const Icon(Icons.my_location),
@@ -161,22 +162,22 @@ class _MapScreenState extends State<MapScreen> {
                     bottom: 6,
                     child: DecoratedBox(
                       decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: .88),
-                          borderRadius: BorderRadius.circular(4)),
+                          color: AppColors.white.withValues(alpha: .88),
+                          borderRadius: BorderRadius.circular(AppRadii.r4)),
                       child: const Padding(
-                          padding:
-                              EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                          padding: EdgeInsets.symmetric(
+                              horizontal: AppSpacing.s5,
+                              vertical: AppSpacing.s2),
                           child: Text('© OpenStreetMap contributors',
-                              style: TextStyle(
-                                  fontSize: 12, color: AppColors.navy))),
+                              style: AppTextStyles.captionNavy)),
                     )),
               ]))),
       const SizedBox(height: 12),
       if (nearby != null)
         ListTile(
-            tileColor: Colors.white,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+            tileColor: AppColors.white,
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppRadii.r18)),
             leading: Icon(nearby.icon, color: AppColors.navy),
             title: Text(nearby.title,
                 maxLines: 2, overflow: TextOverflow.ellipsis),
@@ -185,7 +186,7 @@ class _MapScreenState extends State<MapScreen> {
             onTap: () => widget.onOpen(nearby))
       else
         const Padding(
-            padding: EdgeInsets.all(12),
+            padding: EdgeInsets.all(AppSpacing.s12),
             child: Text(
                 'Tap a marker to view an opportunity, or use the location button to find the closest one.')),
     ]);

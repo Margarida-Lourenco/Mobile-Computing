@@ -5,6 +5,7 @@ import 'firebase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'theme/app_theme.dart';
+import 'services/account_registration.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -37,10 +38,14 @@ class GoodTogetherApp extends StatelessWidget {
                   return const Scaffold(
                       body: Center(child: CircularProgressIndicator()));
                 }
-                return snapshot.data == null
-                    ? const AuthScreen()
-                    : HomeShell(
-                        key: ValueKey(snapshot.data!.uid), connected: true);
+                return ValueListenableBuilder<bool>(
+                    valueListenable: AccountRegistration.inProgress,
+                    builder: (context, registering, _) =>
+                        snapshot.data == null || registering
+                            ? const AuthScreen()
+                            : HomeShell(
+                                key: ValueKey(snapshot.data!.uid),
+                                connected: true));
               })
           : const HomeShell(),
     );

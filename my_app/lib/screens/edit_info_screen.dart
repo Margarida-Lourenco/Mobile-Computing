@@ -3,18 +3,22 @@ import '../theme/app_theme.dart';
 import 'package:image_picker/image_picker.dart';
 
 class ProfileInfo {
+  final String username;
   final String name;
   final String location;
   final String? imageUrl;
   final XFile? selectedImage;
 
   const ProfileInfo(
-      {required this.name,
+      {this.username = '',
+      required this.name,
       required this.location,
       this.imageUrl,
       this.selectedImage});
 
-  String get firstName => name.trim().split(RegExp(r'\s+')).first;
+  String get displayUsername => username.isEmpty ? name : username;
+  String get firstName =>
+      username.isEmpty ? name.trim().split(RegExp(r'\s+')).first : username;
   String get initials => name
       .trim()
       .split(RegExp(r'\s+'))
@@ -42,6 +46,7 @@ class _EditInfoScreenState extends State<EditInfoScreen> {
     if (!formKey.currentState!.validate()) return;
     setState(() => busy = true);
     final info = ProfileInfo(
+        username: widget.profile.username,
         name: name.text.trim(),
         location: location.text.trim(),
         imageUrl: widget.profile.imageUrl,
@@ -87,15 +92,13 @@ class _EditInfoScreenState extends State<EditInfoScreen> {
             child: Form(
               key: formKey,
               child: ListView(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(AppSpacing.s20),
                 children: [
-                  const Text('Your profile',
-                      style:
-                          TextStyle(fontSize: 24, fontWeight: FontWeight.w800)),
+                  const Text('Your profile', style: AppTextStyles.pageTitle),
                   const SizedBox(height: 8),
                   const Text(
                       'Update the details shown on My Page and in your greeting.',
-                      style: TextStyle(color: AppColors.muted)),
+                      style: AppTextStyles.bodyMuted),
                   const SizedBox(height: 24),
                   if (photo != null)
                     FutureBuilder(

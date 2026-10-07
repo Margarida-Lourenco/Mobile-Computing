@@ -1,3 +1,4 @@
+import '../theme/app_theme.dart';
 import 'package:flutter/material.dart';
 
 class EventPhoto extends StatelessWidget {
@@ -8,7 +9,7 @@ class EventPhoto extends StatelessWidget {
       {super.key, required this.url, this.height = 180, this.width});
   @override
   Widget build(BuildContext context) => ClipRRect(
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(AppRadii.r12),
       child: Image.network(url,
           height: height,
           width: width,

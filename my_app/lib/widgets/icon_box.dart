@@ -21,7 +21,7 @@ class IconBox extends StatelessWidget {
       alignment: Alignment.center,
       decoration: BoxDecoration(
         color: color,
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(AppRadii.r15),
       ),
       child: Icon(icon, color: AppColors.navy, size: size * .48),
     );

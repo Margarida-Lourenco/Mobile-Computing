@@ -1,11 +1,10 @@
-Validation completed 2026-10-07
+Validation of Mobile-Computing-main (2).zip update — 2026-10-07
 
-- dart format lib test: completed (31 files).
+- All five requested app changes were applied to the latest supplied project.
+- Original Firebase options, google-services.json and Android Firebase build configuration were preserved byte for byte.
+- dart format lib test: 34 files, no formatting changes needed.
 - flutter analyze --no-pub: No issues found.
-- flutter test --no-pub: All 8 tests passed.
-- Existing tests cover narrow-phone UI, profile editing, category targets, map marker callbacks and location selection.
-- Added tests cover Firestore round-trip metadata/coordinates/images/date, optional-image compatibility, and failed profile save retaining input with an enabled retry button.
-- Dependencies resolved and pubspec.lock updated. flutter pub get then reported Windows plugin symlink support requires Developer Mode. Analysis and tests completed successfully using the downloaded dependencies.
-- No signed APK/IPA or native release build was produced.
-- Live Firebase integration and Firebase rules were not tested against a configured project or emulators: no user project credentials were provided. Follow FIREBASE_SETUP.md for setup and the two-account verification checklist.
-- MapScreen behavior is preserved; its only source change removes an unused import. PickLocationScreen is unchanged.
+- flutter test --no-pub: All 12 tests passed.
+- Checks cover username validation and registration form, username/legacy greetings, one-second confirmation dismissal, profile error recovery, Firestore serialization and existing UI/map interactions.
+- Firebase cloud operations and updated rules were not tested against the live project. Publish the updated Firestore rules before registering accounts with usernames.
+- Dependency resolution succeeded but Flutter reported Windows Developer Mode is required for native plugin symlinks. Analysis and tests ran successfully; no APK/IPA release build was produced.

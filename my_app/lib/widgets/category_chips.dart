@@ -15,30 +15,33 @@ class CategoryChips extends StatelessWidget {
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.only(top: 14, bottom: 2),
+      padding:
+          const EdgeInsets.only(top: AppSpacing.s14, bottom: AppSpacing.s2),
       child: Row(
         children: ['All', 'Today', 'Outdoors', 'Social', 'Food']
             .map(
               (category) => Padding(
-                padding: const EdgeInsets.only(right: 8),
+                padding: const EdgeInsets.only(right: AppSpacing.s8),
                 child: ChoiceChip(
                   label: Text(
                     category,
                     style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color:
-                          selected == category ? Colors.white : AppColors.navy,
+                      fontSize: AppFonts.caption,
+                      fontWeight: AppFonts.medium,
+                      color: selected == category
+                          ? AppColors.white
+                          : AppColors.navy,
                     ),
                   ),
                   selected: selected == category,
                   onSelected: (_) => onSelected(category),
                   selectedColor: AppColors.navy,
-                  backgroundColor: Colors.transparent,
-                  side: const BorderSide(color: Color(0xFFCDDfea)),
+                  backgroundColor: AppColors.transparent,
+                  side: const BorderSide(color: AppColors.chipBorder),
                   labelStyle: TextStyle(
-                    color:
-                        selected == category ? Colors.white : AppColors.muted,
+                    color: selected == category
+                        ? AppColors.white
+                        : AppColors.muted,
                   ),
                 ),
               ),

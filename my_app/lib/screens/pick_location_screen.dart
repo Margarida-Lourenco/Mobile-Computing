@@ -36,7 +36,7 @@ class _PickLocationScreenState extends State<PickLocationScreen> {
       body: SafeArea(
         child: Column(children: [
           const Padding(
-            padding: EdgeInsets.all(16),
+            padding: EdgeInsets.all(AppSpacing.s16),
             child: Text(
                 'Tap the meeting point on the map so volunteers can find it.'),
           ),
@@ -71,7 +71,7 @@ class _PickLocationScreenState extends State<PickLocationScreen> {
                           width: 48,
                           height: 48,
                           child: const Icon(Icons.location_pin,
-                              size: 44, color: AppColors.navy),
+                              size: AppIconSizes.s44, color: AppColors.navy),
                         ),
                       ]),
                   ],
@@ -82,14 +82,14 @@ class _PickLocationScreenState extends State<PickLocationScreen> {
                   child: IgnorePointer(
                       child: DecoratedBox(
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: .88),
-                      borderRadius: BorderRadius.circular(4),
+                      color: AppColors.white.withValues(alpha: .88),
+                      borderRadius: BorderRadius.circular(AppRadii.r4),
                     ),
                     child: const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                      padding: EdgeInsets.symmetric(
+                          horizontal: AppSpacing.s5, vertical: AppSpacing.s2),
                       child: Text('© OpenStreetMap contributors',
-                          style:
-                              TextStyle(fontSize: 12, color: AppColors.navy)),
+                          style: AppTextStyles.captionNavy),
                     ),
                   )),
                 ),
@@ -97,7 +97,7 @@ class _PickLocationScreenState extends State<PickLocationScreen> {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(AppSpacing.s16),
             child: SizedBox(
               width: double.infinity,
               child: FilledButton(

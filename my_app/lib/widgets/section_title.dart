@@ -24,20 +24,12 @@ class SectionTitle extends StatelessWidget {
             children: [
               Text(
                 kicker,
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: AppColors.darkBlue,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 1.2,
-                ),
+                style: AppTextStyles.sectionKicker,
               ),
               const SizedBox(height: 2),
               Text(
                 title,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w900,
-                ),
+                style: AppTextStyles.statValue,
               ),
             ],
           ),

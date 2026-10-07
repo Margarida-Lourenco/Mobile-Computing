@@ -17,7 +17,9 @@ class FirebaseRepository {
     await db.runTransaction((transaction) async {
       if (!(await transaction.get(ref)).exists) {
         transaction.set(ref, {
-          'name': user.email?.split('@').first ?? 'Member',
+          'username':
+              user.displayName ?? user.email?.split('@').first ?? 'Member',
+          'name': user.displayName ?? user.email?.split('@').first ?? 'Member',
           'location': '',
           'profileImageUrl': null
         });
@@ -32,6 +34,7 @@ class FirebaseRepository {
                 .compareTo(a.startsAt ?? DateTime(2000))));
   Stream<ProfileInfo> profile() =>
       db.doc('users/$uid').snapshots().map((d) => ProfileInfo(
+          username: d.data()?['username'] as String? ?? '',
           name: d.data()?['name'] as String? ??
               auth.currentUser?.email?.split('@').first ??
               'Member',

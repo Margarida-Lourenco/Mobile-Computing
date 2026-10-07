@@ -11,10 +11,10 @@ class EmptyState extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(28),
+      padding: const EdgeInsets.all(AppSpacing.s28),
       decoration: BoxDecoration(
-        border: Border.all(color: const Color(0xFFC2D8E5)),
-        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.sheetHandle),
+        borderRadius: BorderRadius.circular(AppRadii.r18),
       ),
       child: Column(
         children: [
@@ -23,10 +23,7 @@ class EmptyState extends StatelessWidget {
           Text(
             text,
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: AppColors.muted,
-              fontSize: 12,
-            ),
+            style: AppTextStyles.captionMuted,
           ),
         ],
       ),
@@ -52,22 +49,22 @@ class EmptyAction extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(25),
+      padding: const EdgeInsets.all(AppSpacing.s25),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white,
         border: Border.all(color: AppColors.border),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(AppRadii.r18),
       ),
       child: Column(
         children: [
           const IconBox(icon: Icons.add, color: AppColors.green),
           const SizedBox(height: 10),
-          Text(title, style: const TextStyle(fontWeight: FontWeight.w800)),
+          Text(title, style: AppTextStyles.bodyBold),
           const SizedBox(height: 4),
           Text(
             body,
             textAlign: TextAlign.center,
-            style: const TextStyle(color: AppColors.muted, fontSize: 12),
+            style: AppTextStyles.captionMuted,
           ),
           const SizedBox(height: 13),
           FilledButton(onPressed: onPressed, child: Text(action)),

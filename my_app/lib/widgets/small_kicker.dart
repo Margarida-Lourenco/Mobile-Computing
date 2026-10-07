@@ -10,12 +10,7 @@ class SmallKicker extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       text,
-      style: const TextStyle(
-        fontSize: 12,
-        color: AppColors.darkBlue,
-        fontWeight: FontWeight.w900,
-        letterSpacing: 1.1,
-      ),
+      style: AppTextStyles.smallKicker,
     );
   }
 }

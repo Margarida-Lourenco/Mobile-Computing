@@ -17,7 +17,7 @@ class AppBottomNav extends StatelessWidget {
       selectedIndex: index,
       onDestinationSelected: onTap,
       height: 70,
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.white,
       indicatorColor: AppColors.paleGreen,
       destinations: const [
         NavigationDestination(

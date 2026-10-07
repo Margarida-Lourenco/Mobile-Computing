@@ -67,10 +67,7 @@ class _MyPageScreenState extends State<MyPageScreen> {
                   : NetworkImage(widget.profile.imageUrl!),
               child: Text(
                 widget.profile.initials,
-                style: const TextStyle(
-                  color: AppColors.navy,
-                  fontWeight: FontWeight.w900,
-                ),
+                style: AppTextStyles.avatarInitials,
               ),
             ),
             const SizedBox(width: 12),
@@ -80,19 +77,15 @@ class _MyPageScreenState extends State<MyPageScreen> {
                 children: [
                   const Text(
                     'Göod Together member',
-                    style: TextStyle(fontSize: 12, color: AppColors.muted),
+                    style: AppTextStyles.captionMuted,
                   ),
                   Text(
-                    widget.profile.name,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w900,
-                    ),
+                    widget.profile.displayUsername,
+                    style: AppTextStyles.profileTitle,
                   ),
                   Text(
                     widget.profile.location,
-                    style:
-                        const TextStyle(fontSize: 12, color: AppColors.muted),
+                    style: AppTextStyles.captionMuted,
                   ),
                 ],
               ),
@@ -103,11 +96,11 @@ class _MyPageScreenState extends State<MyPageScreen> {
         ),
         const SizedBox(height: 15),
         Container(
-          padding: const EdgeInsets.symmetric(vertical: 14),
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.s14),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.white,
             border: Border.all(color: AppColors.border),
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(AppRadii.r18),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -122,10 +115,10 @@ class _MyPageScreenState extends State<MyPageScreen> {
         InkWell(
           onTap: widget.onRewards,
           child: Container(
-            padding: const EdgeInsets.all(15),
+            padding: const EdgeInsets.all(AppSpacing.s15),
             decoration: BoxDecoration(
               color: AppColors.paleGreen,
-              borderRadius: BorderRadius.circular(18),
+              borderRadius: BorderRadius.circular(AppRadii.r18),
             ),
             child: const Row(
               children: [
@@ -135,25 +128,21 @@ class _MyPageScreenState extends State<MyPageScreen> {
                     children: [
                       Text(
                         'LEVEL 2 · KIND NEIGHBOR',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: AppColors.darkBlue,
-                          fontWeight: FontWeight.w800,
-                        ),
+                        style: AppTextStyles.captionAccentBold,
                       ),
                       SizedBox(height: 3),
                       Text(
                         'Your good deeds earn badges',
-                        style: TextStyle(fontWeight: FontWeight.w800),
+                        style: AppTextStyles.bodyBold,
                       ),
                       Text(
                         '2 badges earned · 2 more within reach',
-                        style: TextStyle(fontSize: 12, color: AppColors.muted),
+                        style: AppTextStyles.captionMuted,
                       ),
                     ],
                   ),
                 ),
-                Icon(Icons.auto_awesome, color: AppColors.darkBlue),
+                Icon(AppIcons.badge, color: AppColors.darkBlue),
                 Icon(Icons.chevron_right, color: AppColors.muted),
               ],
             ),
@@ -205,14 +194,11 @@ class _MyPageScreenState extends State<MyPageScreen> {
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
                   color: AppColors.paleGreen,
-                  borderRadius: BorderRadius.circular(13),
+                  borderRadius: BorderRadius.circular(AppRadii.r13),
                 ),
                 child: Text(
                   '${selectedDate.day}',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w900,
-                  ),
+                  style: AppTextStyles.calendarDay,
                 ),
               ),
               const SizedBox(width: 11),
@@ -223,11 +209,11 @@ class _MyPageScreenState extends State<MyPageScreen> {
                   Text(
                     '${_month(selectedDate.month)} ${selectedDate.year} · ${joinedItems.length} shifts',
                     maxLines: 2,
-                    style: const TextStyle(fontWeight: FontWeight.w800),
+                    style: AppTextStyles.bodyBold,
                   ),
                   const Text(
                     'Gothenburg',
-                    style: TextStyle(fontSize: 12, color: AppColors.muted),
+                    style: AppTextStyles.captionMuted,
                   ),
                 ],
               )),
@@ -278,15 +264,12 @@ class _MyPageScreenState extends State<MyPageScreen> {
       children: [
         Text(
           '$value',
-          style: const TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w900,
-          ),
+          style: AppTextStyles.statValue,
         ),
         Text(
           label,
           textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 12, color: AppColors.muted),
+          style: AppTextStyles.captionMuted,
         ),
       ],
     );
@@ -294,11 +277,11 @@ class _MyPageScreenState extends State<MyPageScreen> {
 
   Widget _calendar() {
     return Container(
-      margin: const EdgeInsets.only(top: 14),
+      margin: const EdgeInsets.only(top: AppSpacing.s14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white,
         border: Border.all(color: AppColors.border),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(AppRadii.r18),
       ),
       child: SingleChildScrollView(
           scrollDirection: Axis.horizontal,

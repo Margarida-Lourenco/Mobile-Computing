@@ -92,12 +92,12 @@ class _PostOpportunitySheetState extends State<PostOpportunitySheet> {
                 const SmallKicker('FOR ORGANIZATIONS & NEIGHBORS'),
                 const Text(
                   'Post an opportunity',
-                  style: TextStyle(fontSize: 25, fontWeight: FontWeight.w800),
+                  style: AppTextStyles.compactSheetTitle,
                 ),
                 const SizedBox(height: 6),
                 const Text(
                   'Find kind people nearby for a short, meaningful task.',
-                  style: TextStyle(color: AppColors.muted),
+                  style: AppTextStyles.bodyMuted,
                 ),
                 const SizedBox(height: 20),
                 if (photo != null)
@@ -130,7 +130,7 @@ class _PostOpportunitySheetState extends State<PostOpportunitySheet> {
                 if (error != null) Text(error!),
                 _field(
                     'Opportunity title', title, 'e.g. Pack weekend food bags'),
-                _field('Organization', organization, 'Your organization'),
+                _field('Host', organization, 'Your name or organization'),
                 DropdownButtonFormField<String>(
                   initialValue: category,
                   decoration: _decoration('Category'),
@@ -151,7 +151,7 @@ class _PostOpportunitySheetState extends State<PostOpportunitySheet> {
                         onPressed: _pickDate,
                         icon: const Icon(
                           Icons.calendar_today_outlined,
-                          size: 18,
+                          size: AppIconSizes.s18,
                         ),
                         label: Text(
                           date == null ? 'Date' : '${date!.day}/${date!.month}',
@@ -162,7 +162,8 @@ class _PostOpportunitySheetState extends State<PostOpportunitySheet> {
                     Expanded(
                       child: OutlinedButton.icon(
                         onPressed: _pickTime,
-                        icon: const Icon(Icons.schedule, size: 18),
+                        icon:
+                            const Icon(Icons.schedule, size: AppIconSizes.s18),
                         label: Text(
                           start == null ? 'Starts' : start!.format(context),
                         ),
@@ -218,7 +219,7 @@ class _PostOpportunitySheetState extends State<PostOpportunitySheet> {
     int maxLines = 1,
   ]) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: AppSpacing.s12),
       child: TextField(
         controller: controller,
         maxLines: maxLines,
@@ -231,9 +232,9 @@ class _PostOpportunitySheetState extends State<PostOpportunitySheet> {
     return InputDecoration(
       labelText: label,
       filled: true,
-      fillColor: Colors.white,
+      fillColor: AppColors.white,
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(13),
+        borderRadius: BorderRadius.circular(AppRadii.r13),
         borderSide: const BorderSide(color: AppColors.border),
       ),
     );

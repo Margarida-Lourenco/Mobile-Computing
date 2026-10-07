@@ -34,12 +34,12 @@ class _InviteSheetState extends State<InviteSheet> {
           const SmallKicker('CHALLENGE YOUR FRIENDS'),
           const Text(
             'Do good together',
-            style: TextStyle(fontSize: 25, fontWeight: FontWeight.w800),
+            style: AppTextStyles.compactSheetTitle,
           ),
           const SizedBox(height: 6),
           Text(
             'Invite friends to join “${widget.item.title}”.',
-            style: const TextStyle(color: AppColors.muted),
+            style: AppTextStyles.bodyMuted,
           ),
           const SizedBox(height: 20),
           ...friends.map(
@@ -59,7 +59,7 @@ class _InviteSheetState extends State<InviteSheet> {
               ),
               title: Text(
                 friend[1],
-                style: const TextStyle(fontWeight: FontWeight.w700),
+                style: AppTextStyles.bodyMedium,
               ),
               trailing: Icon(
                 selected.contains(friend[1])

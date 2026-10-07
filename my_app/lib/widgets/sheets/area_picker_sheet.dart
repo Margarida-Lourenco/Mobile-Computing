@@ -36,12 +36,12 @@ class AreaPickerSheet extends StatelessWidget {
           const SmallKicker('EXPLORE LOCALLY'),
           const Text(
             'Choose your area',
-            style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800),
+            style: AppTextStyles.sheetTitle,
           ),
           const SizedBox(height: 6),
           const Text(
             'The map will open around this neighborhood.',
-            style: TextStyle(color: AppColors.muted),
+            style: AppTextStyles.bodyMuted,
           ),
           const SizedBox(height: 15),
           ...areas.entries.map(
@@ -54,15 +54,15 @@ class AreaPickerSheet extends StatelessWidget {
               leading: const IconBox(
                 icon: Icons.location_on_outlined,
                 color: AppColors.paleGreen,
-                size: 42,
+                size: AppIconSizes.s42,
               ),
               title: Text(
                 entry.key,
-                style: const TextStyle(fontWeight: FontWeight.w800),
+                style: AppTextStyles.bodyBold,
               ),
               subtitle: Text(
                 entry.value,
-                style: const TextStyle(fontSize: 12),
+                style: AppTextStyles.caption,
               ),
               trailing: Icon(
                 currentArea == entry.key

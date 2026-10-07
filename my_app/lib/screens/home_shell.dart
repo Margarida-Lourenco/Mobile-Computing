@@ -1,9 +1,11 @@
+import '../theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/firebase_repository.dart';
 import '../data/sample_opportunities.dart';
 import '../models/opportunity.dart';
+import '../widgets/join_confirmation.dart';
 import '../widgets/bottom_nav.dart';
 import '../widgets/header.dart';
 import '../widgets/sheets/area_picker_sheet.dart';
@@ -66,11 +68,13 @@ class _HomeShellState extends State<HomeShell> {
     watch(repository!.membership('joined'), (value) => joined = value);
   }
 
-  Future<void> perform(Future<void> Function() action) async {
+  Future<void> perform(Future<void> Function() action,
+      {VoidCallback? onSuccess}) async {
     if (saving) return;
     setState(() => saving = true);
     try {
       await action();
+      if (mounted) onSuccess?.call();
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -165,7 +169,8 @@ class _HomeShellState extends State<HomeShell> {
               child: CustomScrollView(
                 slivers: [
                   SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 100),
+                    padding: const EdgeInsets.fromLTRB(AppSpacing.s20,
+                        AppSpacing.s12, AppSpacing.s20, AppSpacing.s100),
                     sliver: SliverList(
                       delegate: SliverChildListDelegate([
                         AppHeader(
@@ -177,7 +182,7 @@ class _HomeShellState extends State<HomeShell> {
                         const SizedBox(height: 2),
                         if (!widget.connected)
                           const Padding(
-                              padding: EdgeInsets.all(8),
+                              padding: EdgeInsets.all(AppSpacing.s8),
                               child: Text(
                                   'Preview mode · Firebase is not connected. See FIREBASE_SETUP.md.')),
                         if (widget.connected)
@@ -277,7 +282,7 @@ class _HomeShellState extends State<HomeShell> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       builder: (_) => OpportunityDetailsSheet(
         item: item,
         onEdit: widget.connected && item.ownerId == repository!.uid
@@ -314,8 +319,10 @@ class _HomeShellState extends State<HomeShell> {
         },
         onJoin: () {
           if (canWrite) {
-            perform(() => repository!
-                .setMembership('joined', item.id, !joined.contains(item.id)));
+            final joining = !joined.contains(item.id);
+            perform(() => repository!.setMembership('joined', item.id, joining),
+                onSuccess:
+                    joining ? () => showJoinConfirmation(context) : null);
           }
           Navigator.pop(context);
         },
@@ -331,7 +338,7 @@ class _HomeShellState extends State<HomeShell> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       builder: (_) => InviteSheet(item: item),
     );
   }
@@ -340,7 +347,7 @@ class _HomeShellState extends State<HomeShell> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       builder: (_) => const RewardsSheet(),
     );
   }
@@ -349,7 +356,7 @@ class _HomeShellState extends State<HomeShell> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       builder: (_) => AreaPickerSheet(
         currentArea: area,
         onSelected: (value) => setState(() => area = value),
@@ -362,7 +369,7 @@ class _HomeShellState extends State<HomeShell> {
     showModalBottomSheet(
         context: context,
         isScrollControlled: true,
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppColors.transparent,
         builder: (_) => PostOpportunitySheet(
             existing: existing,
             newId: repository!.newEventId,

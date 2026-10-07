@@ -21,8 +21,8 @@ class OpportunityCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(13),
+      margin: const EdgeInsets.only(bottom: AppSpacing.s10),
+      padding: const EdgeInsets.all(AppSpacing.s13),
       decoration: appCardDecoration(),
       child: Row(
         children: [
@@ -32,7 +32,7 @@ class OpportunityCard extends StatelessWidget {
             IconBox(
               icon: item.icon,
               color: item.id == '2' ? AppColors.paleGreen : AppColors.paleBlue,
-              size: 48,
+              size: AppIconSizes.s48,
             ),
           const SizedBox(width: 13),
           Expanded(
@@ -43,55 +43,41 @@ class OpportunityCard extends StatelessWidget {
                 children: [
                   Text(
                     item.organization.toUpperCase(),
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: AppColors.muted,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: .4,
-                    ),
+                    style: AppTextStyles.cardKicker,
                   ),
                   const SizedBox(height: 2),
                   Text(
                     item.title,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w800,
-                    ),
+                    style: AppTextStyles.cardTitle,
                   ),
                   const SizedBox(height: 7),
                   Row(
                     children: [
                       const Icon(
                         Icons.calendar_today_outlined,
-                        size: 13,
+                        size: AppIconSizes.s13,
                         color: AppColors.muted,
                       ),
                       const SizedBox(width: 4),
                       Flexible(
                         child: Text(
                           item.date,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: AppColors.muted,
-                          ),
+                          style: AppTextStyles.captionMuted,
                         ),
                       ),
                       const SizedBox(width: 11),
                       const Icon(
                         Icons.schedule,
-                        size: 13,
+                        size: AppIconSizes.s13,
                         color: AppColors.muted,
                       ),
                       const SizedBox(width: 4),
                       Flexible(
                         child: Text(
                           item.time,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: AppColors.muted,
-                          ),
+                          style: AppTextStyles.captionMuted,
                         ),
                       ),
                     ],
@@ -99,10 +85,7 @@ class OpportunityCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     '${item.place} · ${item.distance}',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: AppColors.muted,
-                    ),
+                    style: AppTextStyles.captionMuted,
                   ),
                 ],
               ),
@@ -112,8 +95,8 @@ class OpportunityCard extends StatelessWidget {
             onPressed: onFavorite,
             icon: Icon(
               favorite ? Icons.favorite : Icons.favorite_border,
-              color: favorite ? AppColors.darkBlue : const Color(0xFF91A4AF),
-              size: 19,
+              color: favorite ? AppColors.darkBlue : AppColors.inactiveIcon,
+              size: AppIconSizes.s19,
             ),
           ),
         ],
