@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1033851447745",
+    "project_id": "cls055-26-project",
+    "storage_bucket": "cls055-26-project.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1033851447745:android:8969750e6c64fa11a3a740",
+        "android_client_info": {
+          "package_name": "se.goodtogether.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBAQxSC7Lub_E2iD3nWE-QAFKiD5xvFIpg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
