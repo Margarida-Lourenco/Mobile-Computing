@@ -21,6 +21,7 @@ class AppFonts {
 }
 
 class AppColors {
+  static const error = Color(0xFFB3261E);
   static const white = Colors.white;
   static const transparent = Colors.transparent;
   static const grey = Colors.grey;
@@ -96,6 +97,8 @@ BoxDecoration appCardDecoration() {
 }
 
 class AppTextStyles {
+  static const formError =
+      TextStyle(color: AppColors.error, fontSize: AppFonts.body);
   static const brandTitle =
       TextStyle(fontSize: AppFonts.brand, fontWeight: AppFonts.bold);
   static const captionAccentBold = TextStyle(

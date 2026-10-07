@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:latlong2/latlong.dart';
 import '../../screens/pick_location_screen.dart';
@@ -35,6 +37,9 @@ class _PostOpportunitySheetState extends State<PostOpportunitySheet> {
   late final String draftId;
   XFile? photo;
   bool busy = false;
+  bool slowSave = false;
+  Timer? saveTimer;
+  final submitArea = GlobalKey();
   String? error;
   @override
   void initState() {
@@ -65,6 +70,7 @@ class _PostOpportunitySheetState extends State<PostOpportunitySheet> {
 
   @override
   void dispose() {
+    saveTimer?.cancel();
     title.dispose();
     organization.dispose();
     place.dispose();
@@ -127,7 +133,6 @@ class _PostOpportunitySheetState extends State<PostOpportunitySheet> {
                           },
                     icon: const Icon(Icons.photo),
                     label: const Text('Choose event cover photo')),
-                if (error != null) Text(error!),
                 _field(
                     'Opportunity title', title, 'e.g. Pack weekend food bags'),
                 _field('Host', organization, 'Your name or organization'),
@@ -198,14 +203,43 @@ class _PostOpportunitySheetState extends State<PostOpportunitySheet> {
                   3,
                 ),
                 const SizedBox(height: 10),
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton.icon(
-                    onPressed: busy ? null : _publish,
-                    icon: const Icon(Icons.arrow_forward),
-                    label: const Text('Publish opportunity'),
-                  ),
-                ),
+                Column(
+                    key: submitArea,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      if (error != null)
+                        Padding(
+                            padding:
+                                const EdgeInsets.only(bottom: AppSpacing.s12),
+                            child: Semantics(
+                                liveRegion: true,
+                                child: Text(error!,
+                                    key: const ValueKey('publishError'),
+                                    style: AppTextStyles.formError))),
+                      if (busy)
+                        Padding(
+                            padding:
+                                const EdgeInsets.only(bottom: AppSpacing.s12),
+                            child: Text(
+                                slowSave
+                                    ? 'Still waiting for Firebase. Check your internet connection. Your save is still in progress.'
+                                    : 'Saving your opportunity…',
+                                style: AppTextStyles.bodyMuted)),
+                      SizedBox(
+                        width: double.infinity,
+                        child: FilledButton.icon(
+                          onPressed: busy ? null : _publish,
+                          icon: busy
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child:
+                                      CircularProgressIndicator(strokeWidth: 2))
+                              : const Icon(Icons.arrow_forward),
+                          label: Text(busy ? 'Saving…' : 'Publish opportunity'),
+                        ),
+                      ),
+                    ]),
               ],
             ),
           ),
@@ -259,17 +293,30 @@ class _PostOpportunitySheetState extends State<PostOpportunitySheet> {
   }
 
   Future<void> _publish() async {
-    if (title.text.trim().isEmpty ||
-        organization.text.trim().isEmpty ||
-        place.text.trim().isEmpty ||
-        description.text.trim().isEmpty ||
-        mapPoint == null ||
-        date == null ||
-        start == null ||
-        (int.tryParse(spots.text) ?? 0) <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text(
-              'Add all details, a date, start time, a positive volunteer count and a map pin.')));
+    if (busy) return;
+    FocusScope.of(context).unfocus();
+    final missing = <String>[
+      if (title.text.trim().isEmpty) 'title',
+      if (organization.text.trim().isEmpty) 'Host',
+      if (place.text.trim().isEmpty) 'location',
+      if (description.text.trim().isEmpty) 'description',
+      if (date == null) 'date',
+      if (start == null) 'start time',
+      if (mapPoint == null) 'map pin (choose Use this location)',
+      if ((int.tryParse(spots.text) ?? 0) <= 0 ||
+          (int.tryParse(spots.text) ?? 0) > 10000)
+        'volunteer count between 1 and 10000',
+    ];
+    if (missing.isNotEmpty) {
+      setState(() => error = 'Please add: ${missing.join(', ')}.');
+      revealSubmitArea();
+      return;
+    }
+    if (title.text.trim().length > 200 ||
+        description.text.trim().length > 10000) {
+      setState(() => error =
+          'Keep the title within 200 characters and the description within 10000 characters.');
+      revealSubmitArea();
       return;
     }
 
@@ -294,7 +341,18 @@ class _PostOpportunitySheetState extends State<PostOpportunitySheet> {
       longitude: mapPoint!.longitude,
     );
 
-    setState(() => busy = true);
+    setState(() {
+      busy = true;
+      error = null;
+      slowSave = false;
+    });
+    revealSubmitArea();
+    saveTimer = Timer(const Duration(seconds: 10), () {
+      if (mounted && busy) {
+        setState(() => slowSave = true);
+        revealSubmitArea();
+      }
+    });
     try {
       await widget.onSave(opportunity, photo);
       if (!mounted) return;
@@ -302,10 +360,38 @@ class _PostOpportunitySheetState extends State<PostOpportunitySheet> {
       widget.onPublished(opportunity);
       Navigator.pop(context);
     } catch (e) {
-      if (mounted) setState(() => error = 'Could not publish: $e');
+      if (mounted) {
+        setState(() => error = publishError(e));
+        revealSubmitArea();
+      }
     } finally {
+      saveTimer?.cancel();
       if (mounted) setState(() => busy = false);
     }
+  }
+
+  void revealSubmitArea() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final target = submitArea.currentContext;
+      if (mounted && target != null) {
+        Scrollable.ensureVisible(target,
+            duration: const Duration(milliseconds: 200), alignment: 1);
+      }
+    });
+  }
+
+  String publishError(Object error) {
+    if (error is FirebaseException) {
+      if (error.code == 'permission-denied' || error.code == 'unauthorized') {
+        return 'Firebase rejected the save. Check that you are signed in and the latest Firestore rules are published. If you selected a photo, check Storage setup and permissions. (${error.code})';
+      }
+      if (error.code == 'unavailable' ||
+          error.code == 'network-request-failed') {
+        return 'Could not reach Firebase. Check your internet connection and try again. (${error.code})';
+      }
+      return 'Could not publish: ${error.message ?? error.code} (${error.code})';
+    }
+    return 'Could not publish: $error';
   }
 
   String _month(int month) {
