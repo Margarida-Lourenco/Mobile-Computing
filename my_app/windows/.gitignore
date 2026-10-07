@@ -1,17 +1,30 @@
-flutter/ephemeral/
+# Ficheiros temporários e ferramentas do Dart/Flutter
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
+flutter_export_environment.sh
 
-# Visual Studio user-specific files.
+# Configurações do VS Code e Android Studio
+.idea/
+.vscode/
+*.iml
+*.iws
+
+# Ficheiros específicos do Windows (Visual Studio)
+flutter/ephemeral/
 *.suo
 *.user
 *.userosscache
 *.sln.docstates
-
-# Visual Studio build-related files.
 x64/
 x86/
-
-# Visual Studio cache files
-# files ending in .cache can be ignored
 *.[Cc]ache
-# but keep track of directories ending in .cache
 !*.[Cc]ache/
+
+# Ficheiros de sistema e logs
+.DS_Store
+*.log
