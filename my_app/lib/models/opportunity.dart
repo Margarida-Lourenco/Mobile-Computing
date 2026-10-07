@@ -7,6 +7,11 @@ class Opportunity {
   final String? coverImageUrl;
   final List<String> imageUrls;
   final DateTime? startsAt;
+  final DateTime? endsAt;
+  final int attendeeCount;
+  final bool cancelled;
+  final bool removeCoverImage;
+  int get spotsLeft => (spots - attendeeCount).clamp(0, spots);
   final String organization;
   final String title;
   final String date;
@@ -38,6 +43,10 @@ class Opportunity {
     this.coverImageUrl,
     this.imageUrls = const [],
     this.startsAt,
+    this.endsAt,
+    this.attendeeCount = 0,
+    this.cancelled = false,
+    this.removeCoverImage = false,
   });
 
   Map<String, dynamic> toFirestore() => {
@@ -56,6 +65,7 @@ class Opportunity {
         'coverImageUrl': coverImageUrl,
         'imageUrls': imageUrls,
         'startsAt': startsAt == null ? null : Timestamp.fromDate(startsAt!),
+        'endsAt': endsAt == null ? null : Timestamp.fromDate(endsAt!),
       };
   factory Opportunity.fromFirestore(String id, Map<String, dynamic> data) {
     String text(String key) => data[key] is String ? data[key] as String : '';
@@ -77,6 +87,9 @@ class Opportunity {
         imageUrls: (data['imageUrls'] as List?)?.whereType<String>().toList() ??
             const [],
         startsAt: (data['startsAt'] as Timestamp?)?.toDate(),
+        endsAt: (data['endsAt'] as Timestamp?)?.toDate(),
+        attendeeCount: (data['attendeeCount'] as num?)?.toInt() ?? 0,
+        cancelled: data['cancelled'] == true,
         icon: Icons.people_outline_rounded);
   }
 }

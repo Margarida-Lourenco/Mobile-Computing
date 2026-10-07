@@ -107,7 +107,7 @@ void main() {
             .getSize(find.widgetWithText(TextButton, 'See your impact'))
             .height,
         greaterThanOrEqualTo(44));
-    await tester.tap(find.text('My Page').last);
+    await tester.tap(find.byIcon(Icons.calendar_month_outlined));
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
     final editButton = find.widgetWithText(TextButton, 'Edit info');
@@ -118,7 +118,7 @@ void main() {
     expect(find.text('Save changes'), findsOneWidget);
     await tester.pageBack();
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Discover').last);
+    await tester.tap(find.byIcon(Icons.home_outlined));
     await tester.pumpAndSettle();
     await tester.ensureVisible(find.text('Serve warm lunch').first);
     await tester.pumpAndSettle();

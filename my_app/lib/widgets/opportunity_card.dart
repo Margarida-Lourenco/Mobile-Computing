@@ -47,7 +47,7 @@ class OpportunityCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    item.title,
+                    item.cancelled ? '${item.title} · Cancelled' : item.title,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: AppTextStyles.cardTitle,

@@ -2,40 +2,119 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     function signedIn() { return request.auth != null; }
+    function eventPath(id) { return /databases/$(database)/documents/opportunities/$(id); }
+    function personPath(id) { return /databases/$(database)/documents/opportunities/$(id)/attendees/$(request.auth.uid); }
+    function joinPath(id) { return /databases/$(database)/documents/users/$(request.auth.uid)/joined/$(id); }
+    function actorName() {
+      let p = get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+      return p.get('username', p.name);
+    }
     function validEvent(d) {
-      return d.keys().hasOnly(['organization','title','date','time','place','distance','category','description','spots','latitude','longitude','ownerId','coverImageUrl','imageUrls','startsAt','createdAt','updatedAt'])
-        && d.ownerId == request.auth.uid
-        && d.title is string && d.title.size() > 0 && d.title.size() <= 200
-        && d.organization is string && d.place is string && d.description is string
-        && d.description.size() <= 10000 && d.category in ['Community','Outdoors','Social','Food']
+      return d.keys().hasOnly(['organization','title','date','time','place','distance','category','description','spots','latitude','longitude','ownerId','coverImageUrl','imageUrls','startsAt','endsAt','createdAt','updatedAt','attendeeCount','attendanceRevision','cancelled','lastActorId','lastAction'])
+        && d.ownerId is string && d.title is string && d.title.size() > 0 && d.title.size() <= 200
+        && d.organization is string && d.place is string && d.description is string && d.description.size() <= 10000
+        && d.category in ['Community','Outdoors','Social','Food']
         && d.spots is int && d.spots > 0 && d.spots <= 10000
+        && d.get('attendeeCount',0) is int && d.get('attendeeCount',0) >= 0 && d.get('attendeeCount',0) <= d.spots
         && d.latitude is number && d.latitude >= -90 && d.latitude <= 90
         && d.longitude is number && d.longitude >= -180 && d.longitude <= 180
-        && d.startsAt is timestamp && d.imageUrls is list && d.imageUrls.size() <= 1
-        && (d.coverImageUrl == null || d.coverImageUrl is string)
+        && d.startsAt is timestamp && (d.get('endsAt',null) == null || (d.endsAt is timestamp && d.endsAt > d.startsAt))
+        && d.imageUrls is list && d.imageUrls.size() <= 1 && (d.coverImageUrl == null || d.coverImageUrl is string)
         && d.createdAt is timestamp && d.updatedAt == request.time;
+    }
+    function receipt(id, receiver, kind, d) {
+      let key = id + '_' + string(d.attendanceRevision);
+      let n = getAfter(/databases/$(database)/documents/users/$(receiver)/notifications/$(key)).data;
+      return n.eventId == id && n.kind == kind && n.actorId == request.auth.uid
+        && n.actorName == actorName() && n.revision == d.attendanceRevision
+        && n.title == d.title && n.createdAt == request.time;
+    }
+    function transition(id) {
+      let b = get(eventPath(id)).data;
+      let a = getAfter(eventPath(id)).data;
+      let entering = a.lastAction == 'joined';
+      return signedIn() && !b.get('cancelled',false)
+        && a.lastActorId == request.auth.uid && a.lastAction in ['joined','left']
+        && a.updatedAt == request.time && a.attendanceRevision == b.get('attendanceRevision',0)+1
+        && a.attendeeCount == b.get('attendeeCount',0) + (entering ? 1 : -1)
+        && a.attendeeCount >= 0 && a.attendeeCount <= b.spots
+        && (entering
+          ? (!exists(personPath(id)) && existsAfter(personPath(id)) && !exists(joinPath(id)) && existsAfter(joinPath(id)))
+          : (exists(personPath(id)) && !existsAfter(personPath(id)) && exists(joinPath(id)) && !existsAfter(joinPath(id))))
+        && receipt(id, request.auth.uid, entering ? 'joined' : 'left', a)
+        && (b.ownerId == request.auth.uid || receipt(id, b.ownerId, entering ? 'signup' : 'withdrawal', a));
     }
     match /opportunities/{id} {
       allow read: if signedIn();
-      allow create: if signedIn() && validEvent(request.resource.data) && request.resource.data.createdAt == request.time;
-      allow update: if signedIn() && resource.data.ownerId == request.auth.uid
-        && validEvent(request.resource.data) && request.resource.data.createdAt == resource.data.createdAt;
-      allow delete: if signedIn() && resource.data.ownerId == request.auth.uid;
+      allow create: if signedIn() && validEvent(request.resource.data)
+        && request.resource.data.ownerId == request.auth.uid && request.resource.data.createdAt == request.time
+        && request.resource.data.attendeeCount == 0 && request.resource.data.attendanceRevision == 0
+        && request.resource.data.cancelled == false
+        && !request.resource.data.keys().hasAny(['lastActorId','lastAction']);
+      allow update: if signedIn() && (
+        (resource.data.ownerId == request.auth.uid && validEvent(request.resource.data)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['organization','title','date','time','place','distance','category','description','spots','latitude','longitude','coverImageUrl','imageUrls','startsAt','endsAt','updatedAt','cancelled'])
+          && (!resource.data.get('cancelled',false) || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['updatedAt'])))
+        || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['attendeeCount','attendanceRevision','lastActorId','lastAction','updatedAt']) && transition(id))
+      );
+      // Cancellation retains an audit record and attendee history; clients cannot hard-delete it.
+      allow delete: if false;
+      match /attendees/{uid} {
+        allow get: if signedIn() && (request.auth.uid == uid || get(eventPath(id)).data.ownerId == request.auth.uid);
+        allow list: if signedIn() && get(eventPath(id)).data.ownerId == request.auth.uid;
+        allow create: if signedIn() && uid == request.auth.uid && transition(id)
+          && request.resource.data.keys().hasOnly(['username','joinedAt'])
+          && request.resource.data.username == actorName() && request.resource.data.joinedAt == request.time;
+        allow delete: if signedIn() && uid == request.auth.uid && transition(id);
+        allow update: if false;
+      }
+    }
+    function noticeBase(d) {
+      return d.keys().hasOnly(['eventId','title','actorId','actorName','kind','revision','createdAt','read'])
+        && d.eventId is string && d.title is string && d.actorName is string && d.actorName.size() <= 200
+        && d.actorId == request.auth.uid && d.createdAt == request.time && d.revision is int;
+    }
+    function attendanceNotice(uid,key,d) {
+      let e = getAfter(eventPath(d.eventId)).data;
+      return e.lastActorId == request.auth.uid && e.attendanceRevision == d.revision && e.updatedAt == request.time
+        && key == d.eventId + '_' + string(d.revision) && d.title == e.title && d.actorName == actorName()
+        && ((uid == request.auth.uid && d.kind == e.lastAction)
+          || (uid == e.ownerId && uid != request.auth.uid && d.kind == (e.lastAction == 'joined' ? 'signup' : 'withdrawal')));
+    }
+    function cancellationNotice(uid,key,d) {
+      let e = get(eventPath(d.eventId)).data;
+      return e.ownerId == request.auth.uid && e.get('cancelled',false) && d.kind == 'cancelled'
+        && key == d.eventId + '_cancelled' && d.title == e.title && d.revision == 0
+        && exists(/databases/$(database)/documents/opportunities/$(d.eventId)/attendees/$(uid));
     }
     match /users/{uid} {
-      allow read, delete: if signedIn() && request.auth.uid == uid;
+      allow read: if signedIn() && request.auth.uid == uid;
       allow create, update: if signedIn() && request.auth.uid == uid
         && request.resource.data.keys().hasOnly(['name','location','profileImageUrl','username'])
         && (!('username' in request.resource.data) || (request.resource.data.username is string && request.resource.data.username.size() > 0 && request.resource.data.username.size() <= 200))
-        && request.resource.data.name is string && request.resource.data.name.size() > 0
-        && request.resource.data.name.size() <= 200 && request.resource.data.location is string
-        && request.resource.data.location.size() <= 300
+        && request.resource.data.name is string && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 200
+        && request.resource.data.location is string && request.resource.data.location.size() <= 300
         && (request.resource.data.profileImageUrl == null || request.resource.data.profileImageUrl is string);
-      match /{kind}/{eventId} {
-        allow read, delete: if signedIn() && request.auth.uid == uid && kind in ['favorites','joined'];
-        allow create, update: if signedIn() && request.auth.uid == uid && kind in ['favorites','joined']
-          && exists(/databases/$(database)/documents/opportunities/$(eventId))
+      match /favorites/{id} {
+        allow read, delete: if signedIn() && request.auth.uid == uid;
+        allow create, update: if signedIn() && request.auth.uid == uid && exists(eventPath(id))
           && request.resource.data.keys().hasOnly(['createdAt']) && request.resource.data.createdAt == request.time;
+      }
+      match /joined/{id} {
+        allow read: if signedIn() && request.auth.uid == uid;
+        allow create: if signedIn() && request.auth.uid == uid && transition(id)
+          && request.resource.data.keys().hasOnly(['createdAt']) && request.resource.data.createdAt == request.time;
+        allow delete: if signedIn() && request.auth.uid == uid && transition(id);
+        allow update: if false;
+      }
+      match /notifications/{key} {
+        allow read: if signedIn() && request.auth.uid == uid;
+        allow create: if signedIn() && noticeBase(request.resource.data) && request.resource.data.get('read',false) == false
+          && (request.resource.data.kind == 'cancelled' ? cancellationNotice(uid,key,request.resource.data) : attendanceNotice(uid,key,request.resource.data));
+        allow update: if signedIn() && (
+          (request.auth.uid == uid && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']) && request.resource.data.read is bool)
+          || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['createdAt']) && noticeBase(request.resource.data) && cancellationNotice(uid,key,request.resource.data))
+        );
       }
     }
   }

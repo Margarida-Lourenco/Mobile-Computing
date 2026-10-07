@@ -4,6 +4,7 @@ import '../theme/app_theme.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/opportunity_card.dart';
 import '../widgets/section_title.dart';
+import '../widgets/event_calendar.dart';
 import 'edit_info_screen.dart';
 
 class MyPageScreen extends StatefulWidget {
@@ -44,7 +45,7 @@ class _MyPageScreenState extends State<MyPageScreen> {
   @override
   Widget build(BuildContext context) {
     final joinedItems = widget.opportunities
-        .where((o) => widget.joined.contains(o.id))
+        .where((o) => widget.joined.contains(o.id) && !o.cancelled)
         .toList();
     final postedItems = widget.opportunities
         .where((o) => widget.posted.contains(o.id))
@@ -53,6 +54,13 @@ class _MyPageScreenState extends State<MyPageScreen> {
         .where((o) => widget.favorites.contains(o.id))
         .toList();
 
+    final visibleJoined = calendar
+        ? joinedItems
+            .where((e) =>
+                e.startsAt != null &&
+                DateUtils.isSameDay(e.startsAt, selectedDate))
+            .toList()
+        : joinedItems;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -154,37 +162,55 @@ class _MyPageScreenState extends State<MyPageScreen> {
           title: 'Your activity',
         ),
         const SizedBox(height: 12),
-        SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: SegmentedButton<String>(
-              segments: const [
-                ButtonSegment(
-                  value: 'Volunteering',
-                  label: Text('Volunteering'),
-                ),
-                ButtonSegment(value: 'Posted', label: Text('Posted')),
-                ButtonSegment(value: 'Favorites', label: Text('Favorites')),
-              ],
-              selected: {activityTab},
-              onSelectionChanged: (selection) {
-                setState(() => activityTab = selection.first);
-              },
-            )),
+        LayoutBuilder(
+            builder: (context, constraints) => Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: ['Volunteering', 'Posted', 'Favorites']
+                    .map((tab) => SizedBox(
+                        width: constraints.maxWidth < 300
+                            ? constraints.maxWidth
+                            : (constraints.maxWidth - 16) / 3,
+                        child: TextButton(
+                            style: TextButton.styleFrom(
+                                backgroundColor: activityTab == tab
+                                    ? AppColors.navy
+                                    : AppColors.white,
+                                foregroundColor: activityTab == tab
+                                    ? AppColors.white
+                                    : AppColors.navy,
+                                shape: RoundedRectangleBorder(
+                                    borderRadius:
+                                        BorderRadius.circular(AppRadii.r12))),
+                            onPressed: () => setState(() => activityTab = tab),
+                            child: Text(tab,
+                                maxLines: 1, overflow: TextOverflow.ellipsis))))
+                    .toList())),
         if (activityTab == 'Volunteering') ...[
           const SizedBox(height: 14),
-          SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: SegmentedButton<bool>(
-                segments: const [
-                  ButtonSegment(value: false, label: Text('Agenda')),
-                  ButtonSegment(value: true, label: Text('Calendar')),
-                ],
-                selected: {calendar},
-                onSelectionChanged: (selection) {
-                  setState(() => calendar = selection.first);
-                },
-              )),
-          if (calendar) _calendar(),
+          Wrap(alignment: WrapAlignment.end, spacing: 4, children: [
+            TextButton.icon(
+                onPressed: () => setState(() => calendar = false),
+                icon: Icon(Icons.view_agenda_outlined,
+                    color: !calendar ? AppColors.navy : AppColors.muted),
+                label: Text('Agenda',
+                    style: !calendar
+                        ? AppTextStyles.bodyBold
+                        : AppTextStyles.bodyMuted)),
+            TextButton.icon(
+                onPressed: () => setState(() => calendar = true),
+                icon: Icon(Icons.calendar_month_outlined,
+                    color: calendar ? AppColors.navy : AppColors.muted),
+                label: Text('Calendar',
+                    style: calendar
+                        ? AppTextStyles.bodyBold
+                        : AppTextStyles.bodyMuted))
+          ]),
+          if (calendar)
+            EventCalendar(
+                selectedDate: selectedDate,
+                events: joinedItems,
+                onSelected: (date) => setState(() => selectedDate = date)),
           const SizedBox(height: 18),
           Row(
             children: [
@@ -207,7 +233,7 @@ class _MyPageScreenState extends State<MyPageScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '${_month(selectedDate.month)} ${selectedDate.year} · ${joinedItems.length} shifts',
+                    '${calendar ? '${selectedDate.day} ' : ''}${_month(selectedDate.month)} ${selectedDate.year} · ${visibleJoined.length} shifts',
                     maxLines: 2,
                     style: AppTextStyles.bodyBold,
                   ),
@@ -220,8 +246,8 @@ class _MyPageScreenState extends State<MyPageScreen> {
             ],
           ),
           const SizedBox(height: 10),
-          ...joinedItems.map(_card),
-          if (joinedItems.isEmpty)
+          ...visibleJoined.map(_card),
+          if (visibleJoined.isEmpty)
             const EmptyState(
               text:
                   'This day is free. Choose Discover to find a small way to help.',
@@ -272,27 +298,6 @@ class _MyPageScreenState extends State<MyPageScreen> {
           style: AppTextStyles.captionMuted,
         ),
       ],
-    );
-  }
-
-  Widget _calendar() {
-    return Container(
-      margin: const EdgeInsets.only(top: AppSpacing.s14),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        border: Border.all(color: AppColors.border),
-        borderRadius: BorderRadius.circular(AppRadii.r18),
-      ),
-      child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: SizedBox(
-              width: 350,
-              child: CalendarDatePicker(
-                initialDate: selectedDate,
-                firstDate: DateTime(2020),
-                lastDate: DateTime(2035),
-                onDateChanged: (date) => setState(() => selectedDate = date),
-              ))),
     );
   }
 

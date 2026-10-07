@@ -1,3 +1,5 @@
+For this update, follow UPDATE_SETUP.md first for the new Firestore rules and existing signup migration.
+
 # Connect Göod Together to your Firebase project
 
 This update preserves the Firebase configuration supplied in Mobile-Computing-main (2).zip, including lib/firebase_options.dart and android/app/google-services.json. The setup steps below are only needed when connecting another project or adding a platform. The app starts in labelled preview mode, with the original sample opportunities and working map, if configuration is missing or initialization fails. Preview edits are temporary; Firebase mutations require a signed-in account.

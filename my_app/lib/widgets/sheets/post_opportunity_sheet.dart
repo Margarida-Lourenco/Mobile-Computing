@@ -8,6 +8,7 @@ import '../../models/opportunity.dart';
 import '../../theme/app_theme.dart';
 import '../app_sheet.dart';
 import '../small_kicker.dart';
+import '../event_photo.dart';
 
 class PostOpportunitySheet extends StatefulWidget {
   final ValueChanged<Opportunity> onPublished;
@@ -36,6 +37,7 @@ class _PostOpportunitySheetState extends State<PostOpportunitySheet> {
 
   late final String draftId;
   XFile? photo;
+  bool removeCover = false;
   bool busy = false;
   bool slowSave = false;
   Timer? saveTimer;
@@ -57,6 +59,7 @@ class _PostOpportunitySheetState extends State<PostOpportunitySheet> {
       category = e.category;
       date = e.startsAt;
       start = e.startsAt == null ? null : TimeOfDay.fromDateTime(e.startsAt!);
+      end = e.endsAt == null ? null : TimeOfDay.fromDateTime(e.endsAt!);
       if (e.latitude != null && e.longitude != null) {
         mapPoint = LatLng(e.latitude!, e.longitude!);
       }
@@ -66,6 +69,7 @@ class _PostOpportunitySheetState extends State<PostOpportunitySheet> {
   String category = 'Community';
   DateTime? date;
   TimeOfDay? start;
+  TimeOfDay? end;
   LatLng? mapPoint;
 
   @override
@@ -112,6 +116,23 @@ class _PostOpportunitySheetState extends State<PostOpportunitySheet> {
                       builder: (c, s) => s.data == null
                           ? const SizedBox()
                           : Image.memory(s.data!, height: 150)),
+                if (photo == null &&
+                    !removeCover &&
+                    widget.existing?.coverImageUrl != null)
+                  EventPhoto(
+                      url: widget.existing!.coverImageUrl!,
+                      width: double.infinity),
+                if (photo != null ||
+                    (!removeCover && widget.existing?.coverImageUrl != null))
+                  TextButton.icon(
+                      onPressed: busy
+                          ? null
+                          : () => setState(() {
+                                photo = null;
+                                removeCover = true;
+                              }),
+                      icon: const Icon(Icons.delete_outline),
+                      label: const Text('Remove cover photo')),
                 OutlinedButton.icon(
                     onPressed: busy
                         ? null
@@ -122,7 +143,10 @@ class _PostOpportunitySheetState extends State<PostOpportunitySheet> {
                                   maxWidth: 1600,
                                   imageQuality: 85);
                               if (mounted && selected != null) {
-                                setState(() => photo = selected);
+                                setState(() {
+                                  photo = selected;
+                                  removeCover = false;
+                                });
                               }
                             } catch (e) {
                               if (mounted) {
@@ -132,7 +156,11 @@ class _PostOpportunitySheetState extends State<PostOpportunitySheet> {
                             }
                           },
                     icon: const Icon(Icons.photo),
-                    label: const Text('Choose event cover photo')),
+                    label: Text(photo != null ||
+                            (!removeCover &&
+                                widget.existing?.coverImageUrl != null)
+                        ? 'Change cover photo'
+                        : 'Choose event cover photo')),
                 _field(
                     'Opportunity title', title, 'e.g. Pack weekend food bags'),
                 _field('Host', organization, 'Your name or organization'),
@@ -177,7 +205,13 @@ class _PostOpportunitySheetState extends State<PostOpportunitySheet> {
                   ],
                 ),
                 const SizedBox(height: 8),
-                _field('Location', place, 'Street or meeting point'),
+                OutlinedButton.icon(
+                    onPressed: busy ? null : _pickEndTime,
+                    icon: const Icon(Icons.schedule),
+                    label: Text(end == null
+                        ? 'End time (optional)'
+                        : 'Ends ${end!.format(context)}')),
+                _field('Address', place, 'Street or meeting point'),
                 OutlinedButton.icon(
                   onPressed: () async {
                     final result = await Navigator.push<LatLng>(
@@ -292,6 +326,13 @@ class _PostOpportunitySheetState extends State<PostOpportunitySheet> {
     if (picked != null) setState(() => start = picked);
   }
 
+  Future<void> _pickEndTime() async {
+    final picked = await showTimePicker(
+        context: context,
+        initialTime: end ?? const TimeOfDay(hour: 12, minute: 0));
+    if (picked != null && mounted) setState(() => end = picked);
+  }
+
   Future<void> _publish() async {
     if (busy) return;
     FocusScope.of(context).unfocus();
@@ -320,8 +361,21 @@ class _PostOpportunitySheetState extends State<PostOpportunitySheet> {
       return;
     }
 
+    if (end != null &&
+        end!.hour * 60 + end!.minute <= start!.hour * 60 + start!.minute) {
+      setState(() => error =
+          'Choose an end time later than the start time on the same date.');
+      revealSubmitArea();
+      return;
+    }
     final opportunity = Opportunity(
       id: draftId,
+      removeCoverImage: removeCover,
+      attendeeCount: widget.existing?.attendeeCount ?? 0,
+      endsAt: end == null
+          ? null
+          : DateTime(
+              date!.year, date!.month, date!.day, end!.hour, end!.minute),
       ownerId: widget.existing?.ownerId ?? '',
       coverImageUrl: widget.existing?.coverImageUrl,
       imageUrls: widget.existing?.imageUrls ?? const [],
@@ -330,7 +384,8 @@ class _PostOpportunitySheetState extends State<PostOpportunitySheet> {
       organization: organization.text.trim(),
       title: title.text.trim(),
       date: date == null ? 'New' : '${date!.day} ${_month(date!.month)}',
-      time: start == null ? 'Time to be confirmed' : start!.format(context),
+      time:
+          '${start!.format(context)}${end == null ? '' : ' – ${end!.format(context)}'}',
       place: place.text.trim(),
       distance: 'New',
       category: category,

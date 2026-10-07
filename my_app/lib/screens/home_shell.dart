@@ -17,6 +17,9 @@ import 'discover_screen.dart';
 import 'edit_info_screen.dart';
 import 'map_screen.dart';
 import 'my_page_screen.dart';
+import 'notifications_screen.dart';
+import '../models/app_notification.dart';
+import '../widgets/sheets/attendees_sheet.dart';
 
 class HomeShell extends StatefulWidget {
   final bool connected;
@@ -31,6 +34,8 @@ class _HomeShellState extends State<HomeShell> {
   final List<StreamSubscription<dynamic>> subscriptions = [];
   bool loading = false, saving = false;
   String? loadError;
+  List<AppNotification> notices = [];
+  bool noticesLoading = false;
   void watch<T>(Stream<T> stream, void Function(T) apply) {
     subscriptions.add(stream.listen((value) {
       if (mounted) setState(() => apply(value));
@@ -66,6 +71,11 @@ class _HomeShellState extends State<HomeShell> {
     watch(repository!.profile(), (value) => profile = value);
     watch(repository!.membership('favorites'), (value) => favorites = value);
     watch(repository!.membership('joined'), (value) => joined = value);
+    noticesLoading = true;
+    watch(repository!.notifications(), (value) {
+      notices = value;
+      noticesLoading = false;
+    });
   }
 
   Future<void> perform(Future<void> Function() action,
@@ -141,6 +151,7 @@ class _HomeShellState extends State<HomeShell> {
     final query = searchController.text.toLowerCase();
 
     return opportunities.where((opportunity) {
+      if (opportunity.cancelled) return false;
       final matchesSearch = '${opportunity.title} '
               '${opportunity.organization} '
               '${opportunity.place}'
@@ -174,7 +185,7 @@ class _HomeShellState extends State<HomeShell> {
                     sliver: SliverList(
                       delegate: SliverChildListDelegate([
                         AppHeader(
-                          isMyPage: navIndex == 3,
+                          isMyPage: navIndex == 4,
                           area: area,
                           firstName: profile.firstName,
                           onArea: _showAreaPicker,
@@ -211,6 +222,7 @@ class _HomeShellState extends State<HomeShell> {
             ),
             AppBottomNav(
               index: navIndex,
+              unreadCount: notices.where((n) => !n.read).length,
               onTap: _onNavigation,
             ),
           ],
@@ -228,6 +240,23 @@ class _HomeShellState extends State<HomeShell> {
           onOpen: _showDetails,
         );
       case 3:
+        return NotificationsScreen(
+            notifications: notices,
+            loading: noticesLoading,
+            onOpen: (notice) {
+              if (widget.connected) {
+                perform(() => repository!.markNotificationRead(notice.id));
+              }
+              final matches =
+                  opportunities.where((e) => e.id == notice.eventId);
+              if (matches.isNotEmpty) {
+                _showDetails(matches.first);
+              } else {
+                ScaffoldMessenger.of(context)
+                    .showSnackBar(SnackBar(content: Text(notice.message)));
+              }
+            });
+      case 4:
         return MyPageScreen(
           opportunities: opportunities,
           joined: joined.intersection(opportunities.map((e) => e.id).toSet()),
@@ -258,7 +287,7 @@ class _HomeShellState extends State<HomeShell> {
           onCategory: (value) => setState(() => category = value),
           onOpen: _showDetails,
           onFavorite: _toggleFavorite,
-          onImpact: () => setState(() => navIndex = 3),
+          onImpact: () => setState(() => navIndex = 4),
           onRewards: _showRewards,
         );
     }
@@ -278,60 +307,86 @@ class _HomeShellState extends State<HomeShell> {
         repository!.setMembership('favorites', id, !favorites.contains(id)));
   }
 
-  void _showDetails(Opportunity item) {
+  void _showDetails(Opportunity initial) {
     showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: AppColors.transparent,
-      builder: (_) => OpportunityDetailsSheet(
-        item: item,
-        onEdit: widget.connected && item.ownerId == repository!.uid
-            ? () {
-                Navigator.pop(context);
-                _showPost(item);
-              }
-            : null,
-        onDelete: widget.connected && item.ownerId == repository!.uid
-            ? () async {
-                Navigator.pop(context);
-                final confirmed = await showDialog<bool>(
-                    context: context,
-                    builder: (c) => AlertDialog(
-                            title: const Text('Delete this event?'),
-                            actions: [
-                              TextButton(
-                                  onPressed: () => Navigator.pop(c, false),
-                                  child: const Text('Cancel')),
-                              TextButton(
-                                  onPressed: () => Navigator.pop(c, true),
-                                  child: const Text('Delete'))
-                            ]));
-                if (confirmed == true) {
-                  perform(() => repository!.deleteEvent(item));
-                }
-              }
-            : null,
-        isFavorite: favorites.contains(item.id),
-        isJoined: joined.contains(item.id),
-        onFavorite: () {
-          _toggleFavorite(item.id);
-          Navigator.pop(context);
-        },
-        onJoin: () {
-          if (canWrite) {
-            final joining = !joined.contains(item.id);
-            perform(() => repository!.setMembership('joined', item.id, joining),
-                onSuccess:
-                    joining ? () => showJoinConfirmation(context) : null);
-          }
-          Navigator.pop(context);
-        },
-        onInvite: () {
-          Navigator.pop(context);
-          _showInvite(item);
-        },
-      ),
-    );
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: AppColors.transparent,
+        builder: (_) => StreamBuilder<List<Opportunity>>(
+            stream: widget.connected
+                ? repository!.events()
+                : Stream.value(opportunities),
+            initialData: opportunities,
+            builder: (sheetContext, snapshot) {
+              final item = (snapshot.data ?? [])
+                      .where((e) => e.id == initial.id)
+                      .firstOrNull ??
+                  initial;
+              final owner = widget.connected && item.ownerId == repository!.uid;
+              return OpportunityDetailsSheet(
+                  item: item,
+                  isFavorite: favorites.contains(item.id),
+                  isJoined: joined.contains(item.id),
+                  onAttendees: owner
+                      ? () {
+                          Navigator.pop(sheetContext);
+                          showModalBottomSheet(
+                              context: context,
+                              isScrollControlled: true,
+                              builder: (_) => AttendeesSheet(
+                                  title: item.title,
+                                  attendees: repository!.attendees(item.id)));
+                        }
+                      : null,
+                  onEdit: owner
+                      ? () {
+                          Navigator.pop(sheetContext);
+                          _showPost(item);
+                        }
+                      : null,
+                  onDelete: owner
+                      ? () async {
+                          Navigator.pop(sheetContext);
+                          final confirmed = await showDialog<bool>(
+                              context: context,
+                              builder: (c) => AlertDialog(
+                                      title: const Text('Cancel this event?'),
+                                      content: const Text(
+                                          'It will be removed from Discover and volunteers will receive a notification.'),
+                                      actions: [
+                                        TextButton(
+                                            onPressed: () =>
+                                                Navigator.pop(c, false),
+                                            child: const Text('Keep event')),
+                                        TextButton(
+                                            onPressed: () =>
+                                                Navigator.pop(c, true),
+                                            child: const Text('Cancel event'))
+                                      ]));
+                          if (confirmed == true) {
+                            perform(() => repository!.deleteEvent(item));
+                          }
+                        }
+                      : null,
+                  onFavorite: () {
+                    _toggleFavorite(item.id);
+                    Navigator.pop(sheetContext);
+                  },
+                  onJoin: () {
+                    if (canWrite) {
+                      final joining = !joined.contains(item.id);
+                      perform(() => repository!.setAttendance(item.id, joining),
+                          onSuccess: joining
+                              ? () => showJoinConfirmation(context)
+                              : null);
+                    }
+                    Navigator.pop(sheetContext);
+                  },
+                  onInvite: () {
+                    Navigator.pop(sheetContext);
+                    _showInvite(item);
+                  });
+            }));
   }
 
   void _showInvite(Opportunity item) {

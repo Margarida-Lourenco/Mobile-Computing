@@ -97,6 +97,10 @@ BoxDecoration appCardDecoration() {
 }
 
 class AppTextStyles {
+  static const calendarSelected = TextStyle(
+      fontSize: AppFonts.caption,
+      color: AppColors.white,
+      fontWeight: AppFonts.bold);
   static const formError =
       TextStyle(color: AppColors.error, fontSize: AppFonts.body);
   static const brandTitle =
