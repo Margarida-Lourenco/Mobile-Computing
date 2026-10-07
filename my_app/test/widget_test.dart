@@ -46,6 +46,36 @@ void main() {
     expect(saved?.location, 'Majorna, Sweden');
   });
 
+  testWidgets('failed profile save retains input and allows retry',
+      (tester) async {
+    int attempts = 0;
+    await tester.pumpWidget(MaterialApp(
+        theme: AppTheme.light,
+        home: EditInfoScreen(
+            profile: const ProfileInfo(name: 'Member', location: 'Sweden'),
+            onSave: (info) async {
+              attempts++;
+              if (attempts == 1) throw StateError('Offline');
+            })));
+    await tester.enterText(find.byType(TextFormField).first, 'Alex');
+    await tester.tap(find.text('Save changes'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Could not save profile:'), findsOneWidget);
+    expect(
+        tester
+            .widget<TextFormField>(find.byType(TextFormField).first)
+            .controller!
+            .text,
+        'Alex');
+    expect(
+        tester
+            .widget<FilledButton>(
+                find.widgetWithText(FilledButton, 'Save changes'))
+            .onPressed,
+        isNotNull);
+    expect(attempts, 1);
+  });
+
   testWidgets('category chips have readable labels and 44-pixel targets',
       (tester) async {
     await tester.pumpWidget(MaterialApp(

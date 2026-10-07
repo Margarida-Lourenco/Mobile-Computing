@@ -1,0 +1,41 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function validEvent(d) {
+      return d.keys().hasOnly(['organization','title','date','time','place','distance','category','description','spots','latitude','longitude','ownerId','coverImageUrl','imageUrls','startsAt','createdAt','updatedAt'])
+        && d.ownerId == request.auth.uid
+        && d.title is string && d.title.size() > 0 && d.title.size() <= 200
+        && d.organization is string && d.place is string && d.description is string
+        && d.description.size() <= 10000 && d.category in ['Community','Outdoors','Social','Food']
+        && d.spots is int && d.spots > 0 && d.spots <= 10000
+        && d.latitude is number && d.latitude >= -90 && d.latitude <= 90
+        && d.longitude is number && d.longitude >= -180 && d.longitude <= 180
+        && d.startsAt is timestamp && d.imageUrls is list && d.imageUrls.size() <= 1
+        && (d.coverImageUrl == null || d.coverImageUrl is string)
+        && d.createdAt is timestamp && d.updatedAt == request.time;
+    }
+    match /opportunities/{id} {
+      allow read: if signedIn();
+      allow create: if signedIn() && validEvent(request.resource.data) && request.resource.data.createdAt == request.time;
+      allow update: if signedIn() && resource.data.ownerId == request.auth.uid
+        && validEvent(request.resource.data) && request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if signedIn() && resource.data.ownerId == request.auth.uid;
+    }
+    match /users/{uid} {
+      allow read, delete: if signedIn() && request.auth.uid == uid;
+      allow create, update: if signedIn() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['name','location','profileImageUrl'])
+        && request.resource.data.name is string && request.resource.data.name.size() > 0
+        && request.resource.data.name.size() <= 200 && request.resource.data.location is string
+        && request.resource.data.location.size() <= 300
+        && (request.resource.data.profileImageUrl == null || request.resource.data.profileImageUrl is string);
+      match /{kind}/{eventId} {
+        allow read, delete: if signedIn() && request.auth.uid == uid && kind in ['favorites','joined'];
+        allow create, update: if signedIn() && request.auth.uid == uid && kind in ['favorites','joined']
+          && exists(/databases/$(database)/documents/opportunities/$(eventId))
+          && request.resource.data.keys().hasOnly(['createdAt']) && request.resource.data.createdAt == request.time;
+      }
+    }
+  }
+}

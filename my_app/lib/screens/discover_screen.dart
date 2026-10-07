@@ -10,13 +10,13 @@ import '../widgets/section_title.dart';
 
 class DiscoverScreen extends StatelessWidget {
   final List<Opportunity> opportunities;
-  final Set<int> favorites;
+  final Set<String> favorites;
   final String category;
   final TextEditingController searchController;
   final ValueChanged<String> onSearch;
   final ValueChanged<String> onCategory;
   final ValueChanged<Opportunity> onOpen;
-  final ValueChanged<int> onFavorite;
+  final ValueChanged<String> onFavorite;
   final VoidCallback onImpact;
   final VoidCallback onRewards;
 

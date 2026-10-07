@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/opportunity.dart';
 import '../theme/app_theme.dart';
 import 'icon_box.dart';
+import 'event_photo.dart';
 
 class OpportunityCard extends StatelessWidget {
   final Opportunity item;
@@ -25,11 +26,14 @@ class OpportunityCard extends StatelessWidget {
       decoration: appCardDecoration(),
       child: Row(
         children: [
-          IconBox(
-            icon: item.icon,
-            color: item.id == 2 ? AppColors.paleGreen : AppColors.paleBlue,
-            size: 48,
-          ),
+          if (item.coverImageUrl != null)
+            EventPhoto(url: item.coverImageUrl!, height: 60, width: 60)
+          else
+            IconBox(
+              icon: item.icon,
+              color: item.id == '2' ? AppColors.paleGreen : AppColors.paleBlue,
+              size: 48,
+            ),
           const SizedBox(width: 13),
           Expanded(
             child: InkWell(
