@@ -12,9 +12,24 @@ class RewardsSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final badges = [
-      ['First Step', 'Completed your first activity', AppIcons.badge, rewards.completed >= 1],
-      ['Helping Hand', 'Shared 3 hours of your time', Icons.favorite, rewards.hours >= 3],
-      ['Team Player', 'Completed 3 activities', Icons.people_outline, rewards.completed >= 3],
+      [
+        'First Step',
+        'Completed your first activity',
+        AppIcons.badge,
+        rewards.completed >= 1
+      ],
+      [
+        'Helping Hand',
+        'Shared 3 hours of your time',
+        Icons.favorite,
+        rewards.hours >= 3
+      ],
+      [
+        'Team Player',
+        'Completed 3 activities',
+        Icons.people_outline,
+        rewards.completed >= 3
+      ],
       [
         'Local Hero',
         'Complete 5 local activities',
@@ -45,12 +60,12 @@ class RewardsSheet extends StatelessWidget {
           ),
           const SizedBox(height: 7),
           ClipRRect(
-            borderRadius: BorderRadius.all(Radius.circular(AppRadii.r10)),
+            borderRadius: const BorderRadius.all(Radius.circular(AppRadii.r10)),
             child: LinearProgressIndicator(
               value: rewards.progress,
               minHeight: 7,
               backgroundColor: AppColors.paleBlue,
-              valueColor: AlwaysStoppedAnimation(AppColors.darkBlue),
+              valueColor: const AlwaysStoppedAnimation(AppColors.darkBlue),
             ),
           ),
           const SizedBox(height: 6),

@@ -1,3 +1,5 @@
+> This is the Spark edition. Follow [SPARK_SETUP.md](SPARK_SETUP.md) for current setup and validation. Any photo-upload, Storage or Functions instructions below describe older versions.
+
 # Posting feedback fix
 
 The previous form could keep accepting taps without showing a visible explanation. Missing-details warnings used a snackbar behind the bottom sheet, and backend errors were displayed above the form rather than beside the Publish button.

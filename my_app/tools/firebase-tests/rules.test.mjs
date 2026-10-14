@@ -5,7 +5,7 @@ import {doc,setDoc,getDoc,getDocs,collection,updateDoc,deleteDoc,runTransaction,
 const env=await initializeTestEnvironment({projectId:'demo-good-together',firestore:{host:'127.0.0.1',port:8088,rules:fs.readFileSync(new URL('../../firestore.rules',import.meta.url),'utf8')}});
 const dbFor=id=>env.authenticatedContext(id).firestore();
 const host=dbFor('host');const users=['a','b','c'];
-const eventData={ownerId:'host',organization:'Host',title:'Park cleanup',date:'7 Oct',time:'10:00',place:'Park',distance:'',category:'Community',description:'Help',spots:2,latitude:57.7,longitude:11.9,startsAt:Timestamp.fromDate(new Date('2027-10-07T10:00:00Z')),endsAt:null,coverImageUrl:null,imageUrls:[],createdAt:Timestamp.now(),updatedAt:Timestamp.now(),attendeeCount:0,attendanceRevision:0,cancelled:false};
+const eventData={ownerId:'host',organization:'Host',title:'Park cleanup',date:'7 Oct',time:'10:00',place:'Park',distance:'',category:'Community',description:'Help',spots:2,latitude:57.7,longitude:11.9,startsAt:Timestamp.fromDate(new Date('2027-10-07T10:00:00Z')),endsAt:Timestamp.fromDate(new Date('2027-10-07T12:00:00Z')),coverImageUrl:null,imageUrls:[],createdAt:Timestamp.now(),updatedAt:Timestamp.now(),attendeeCount:0,attendanceRevision:0,cancelled:false};
 async function attendance(id,joining=true,{omitHostNotice=false}={}) {
  const db=dbFor(id), event=doc(db,'opportunities/event'), person=doc(db,`opportunities/event/attendees/${id}`), mirror=doc(db,`users/${id}/joined/event`);
  return runTransaction(db,async tx=>{
@@ -21,11 +21,46 @@ async function attendance(id,joining=true,{omitHostNotice=false}={}) {
   return true;
  });
 }
+async function registerMember(id) {
+ const db=dbFor(id), marker=doc(db,`members/${id}`), stats=doc(db,'communityStats/members');
+ return runTransaction(db,async tx=>{
+  const existing=await tx.get(marker), counter=await tx.get(stats);
+  if(existing.exists())return;
+  tx.set(marker,{createdAt:serverTimestamp()});
+  tx.set(stats,{accounts:(counter.data()?.accounts??0)+1,updatedAt:serverTimestamp()});
+ });
+}
 let checks=0;const check=(name,fn)=>Promise.resolve().then(fn).then(()=>{checks++;console.log('PASS '+name);});
 try {
  await env.withSecurityRulesDisabled(async c=>{const db=c.firestore();await setDoc(doc(db,'opportunities/event'),eventData);for(const id of ['host',...users])await setDoc(doc(db,`users/${id}`),{username:id,name:id,location:'Sweden',profileImageUrl:null});});
+ await check('first member initializes the counter atomically',async()=>{
+  await registerMember('a');assert.equal((await getDoc(doc(host,'communityStats/members'))).data().accounts,1);
+ });
+ await check('returning member does not increment the counter',async()=>{
+  await registerMember('a');assert.equal((await getDoc(doc(host,'communityStats/members'))).data().accounts,1);
+ });
+ await check('concurrent registrations do not lose or double count members',async()=>{
+  await Promise.all([registerMember('b'),registerMember('c')]);
+  assert.equal((await getDoc(doc(host,'communityStats/members'))).data().accounts,3);
+ });
+ await check('member cannot forge, reset or delete totals',async()=>{
+  await assertFails(setDoc(doc(dbFor('a'),'communityStats/members'),{accounts:999,updatedAt:serverTimestamp()}));
+  await assertFails(deleteDoc(doc(dbFor('a'),'communityStats/members')));
+ });
+ await check('member directory cannot be listed',()=>assertFails(getDocs(collection(host,'members'))));
+ await check('member markers cannot be changed or removed',async()=>{
+  await assertFails(updateDoc(doc(dbFor('a'),'members/a'),{createdAt:serverTimestamp()}));
+  await assertFails(deleteDoc(doc(dbFor('a'),'members/a')));
+ });
+ await check('marker without counter increment cannot be created',()=>assertFails(setDoc(doc(host,'members/host'),{createdAt:serverTimestamp()})));
+ await check('counter increment without marker cannot be created',()=>assertFails(updateDoc(doc(host,'communityStats/members'),{accounts:4,updatedAt:serverTimestamp()})));
+ await check('cannot register another account marker',()=>assertFails(setDoc(doc(host,'members/stranger'),{createdAt:serverTimestamp()})));
+ await check('anonymous cannot read member totals',()=>assertFails(getDoc(doc(env.unauthenticatedContext().firestore(),'communityStats/members'))));
  await check('anonymous cannot read events',()=>assertFails(getDoc(doc(env.unauthenticatedContext().firestore(),'opportunities/event'))));
  await check('host can create event with zero attendance',()=>assertSucceeds(setDoc(doc(host,'opportunities/new'),{...eventData,createdAt:serverTimestamp(),updatedAt:serverTimestamp()})));
+ await check('end time is required by backend rules',()=>assertFails(setDoc(doc(host,'opportunities/missing-end'),{...eventData,endsAt:null,createdAt:serverTimestamp(),updatedAt:serverTimestamp()})));
+ await check('end time must be later than start',()=>assertFails(setDoc(doc(host,'opportunities/invalid-end'),{...eventData,endsAt:eventData.startsAt,createdAt:serverTimestamp(),updatedAt:serverTimestamp()})));
+ await check('clients cannot write community totals',()=>assertFails(setDoc(doc(host,'communityStats/members'),{hours:999,accounts:999})));
  await check('creator cannot impersonate another host',()=>assertFails(setDoc(doc(dbFor('a'),'opportunities/forged'),{...eventData,createdAt:serverTimestamp(),updatedAt:serverTimestamp()})));
  await check('missing host notification rejects the entire sign-up',()=>assertFails(attendance('a',true,{omitHostNotice:true})));
  await check('two simultaneous last-place sign-ups succeed and third cannot overbook',async()=>{

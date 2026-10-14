@@ -175,31 +175,29 @@ void main() {
         home: Scaffold(
             bottomNavigationBar: AppBottomNav(
                 index: 0, unreadCount: 2, onTap: (i) => destination = i))));
-    expect(
-        tester
-            .widgetList<NavigationDestination>(
-                find.byType(NavigationDestination))
-            .map((d) => d.label)
-            .toList(),
-        ['Discover', 'Map', 'Post', 'Notifications', 'My Page']);
+    final labels = ['Discover', 'Map', 'Post', 'Notifications', 'My Page'];
+    for (var i = 0; i < labels.length; i++) {
+      expect(find.text(labels[i]), findsOneWidget);
+      if (i > 0) {
+        expect(tester.getCenter(find.text(labels[i])).dx,
+            greaterThan(tester.getCenter(find.text(labels[i - 1])).dx));
+      }
+    }
     await tester.tap(find.byIcon(Icons.notifications_outlined));
     expect(destination, 3);
   });
-  testWidgets('cover can be removed and changed, and address label is shown',
+  testWidgets('posting offers a cover photo and retains the address field',
       (tester) async {
     Opportunity? saved;
     await editor(tester, fixture(cover: 'https://example.com/cover.jpg'),
         (e) => saved = e);
-    await tester.ensureVisible(find.text('Remove cover photo'));
-    await tester.tap(find.text('Remove cover photo'));
-    await tester.pumpAndSettle();
     expect(find.text('Remove cover photo'), findsNothing);
     expect(find.text('Choose event cover photo'), findsOneWidget);
     expect(find.widgetWithText(TextField, 'Address'), findsOneWidget);
     await tester.ensureVisible(find.text('Publish opportunity'));
     await tester.tap(find.text('Publish opportunity'));
     await tester.pumpAndSettle();
-    expect(saved!.removeCoverImage, isTrue);
+    expect(saved!.removeCoverImage, isFalse);
     expect(saved!.endsAt, DateTime(2027, 10, 7, 12));
   });
   testWidgets('end time must be later than start time', (tester) async {

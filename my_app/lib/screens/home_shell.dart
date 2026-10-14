@@ -6,6 +6,7 @@ import '../services/firebase_repository.dart';
 import '../data/sample_opportunities.dart';
 import '../models/opportunity.dart';
 import '../models/reward_progress.dart';
+import '../models/community_impact.dart';
 import '../widgets/join_confirmation.dart';
 import '../widgets/bottom_nav.dart';
 import '../widgets/header.dart';
@@ -38,6 +39,13 @@ class _HomeShellState extends State<HomeShell> {
   String? loadError;
   List<AppNotification> notices = [];
   bool noticesLoading = false;
+  int? memberCount;
+  CommunityImpact? get communityImpact => !widget.connected ||
+          loading ||
+          loadError != null
+      ? null
+      : CommunityImpact.fromEvents(opportunities, memberCount, DateTime.now());
+  String? impactStatus = 'Connect Firebase to view community totals.';
   void watch<T>(Stream<T> stream, void Function(T) apply) {
     subscriptions.add(stream.listen((value) {
       if (mounted) setState(() => apply(value));
@@ -58,14 +66,27 @@ class _HomeShellState extends State<HomeShell> {
     }
     subscriptions.clear();
     repository = FirebaseRepository();
-    repository!.ensureProfile().catchError((Object e) {
-      if (mounted) {
-        setState(() => loadError =
-            'Could not initialize your profile. Check Firebase rules and retry.');
-      }
-    });
+    _initializeMember();
     loading = true;
     loadError = null;
+    memberCount = null;
+    impactStatus = 'Loading community totals…';
+    subscriptions.add(repository!.memberCount().listen((value) {
+      if (mounted) {
+        setState(() {
+          memberCount = value;
+          impactStatus =
+              value == null ? 'Member count is being prepared.' : null;
+        });
+      }
+    }, onError: (Object error) {
+      if (mounted) {
+        setState(() {
+          memberCount = null;
+          impactStatus = 'Member count unavailable. Please retry.';
+        });
+      }
+    }));
     watch(repository!.events(), (items) {
       opportunities = items;
       loading = false;
@@ -78,6 +99,28 @@ class _HomeShellState extends State<HomeShell> {
       notices = value;
       noticesLoading = false;
     });
+  }
+
+  Future<void> _initializeMember() async {
+    final store = repository!;
+    try {
+      await store.ensureProfile();
+    } catch (error) {
+      if (mounted) {
+        setState(
+            () => loadError = 'Could not load your profile. Please retry.');
+      }
+      return;
+    }
+    try {
+      await store.registerMember();
+    } catch (error) {
+      // A stats permission/network problem must not block signing in or shifts.
+      debugPrint('Member count sync failed: $error');
+      if (mounted) {
+        setState(() => impactStatus = 'Member count is still syncing.');
+      }
+    }
   }
 
   Future<void> perform(Future<void> Function() action,
@@ -273,7 +316,6 @@ class _HomeShellState extends State<HomeShell> {
           onFavorite: _toggleFavorite,
           onRewards: _showRewards,
           onPost: _showPost,
-          rewards: rewardProgress,
           onSignOut: widget.connected && !saving
               ? () => perform(() => FirebaseAuth.instance.signOut())
               : null,
@@ -291,6 +333,8 @@ class _HomeShellState extends State<HomeShell> {
           onOpen: _showDetails,
           onFavorite: _toggleFavorite,
           rewards: rewardProgress,
+          communityImpact: communityImpact,
+          impactStatus: impactStatus,
           onImpact: () => setState(() => navIndex = 4),
           onRewards: _showRewards,
         );
@@ -402,7 +446,8 @@ class _HomeShellState extends State<HomeShell> {
     );
   }
 
-  RewardProgress get rewardProgress => RewardProgress.fromShifts(opportunities, joined, DateTime.now());
+  RewardProgress get rewardProgress =>
+      RewardProgress.fromShifts(opportunities, joined, DateTime.now());
 
   void _showRewards() {
     showModalBottomSheet(
@@ -434,8 +479,8 @@ class _HomeShellState extends State<HomeShell> {
         builder: (_) => PostOpportunitySheet(
             existing: existing,
             newId: repository!.newEventId,
-            onSave: (event, photo) =>
-                repository!.saveEvent(event, photo, update: existing != null),
+            onSave: (event, photo) => repository!
+                .saveEvent(event, photo: photo, update: existing != null),
             onPublished: (_) {
               if (mounted) {
                 setState(() {

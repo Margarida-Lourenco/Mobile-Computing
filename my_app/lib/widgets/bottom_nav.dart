@@ -13,44 +13,96 @@ class AppBottomNav extends StatelessWidget {
     required this.onTap,
   });
 
+  static const _labels = [
+    'Discover',
+    'Map',
+    'Post',
+    'Notifications',
+    'My Page'
+  ];
+  static const _icons = [
+    Icons.home_outlined,
+    Icons.map_outlined,
+    Icons.add_circle_outline,
+    Icons.notifications_outlined,
+    Icons.calendar_month_outlined
+  ];
+  static const _selectedIcons = [
+    Icons.home,
+    Icons.map,
+    Icons.add_circle,
+    Icons.notifications,
+    Icons.calendar_month
+  ];
+
   @override
   Widget build(BuildContext context) {
-    return NavigationBar(
-      selectedIndex: index,
-      onDestinationSelected: onTap,
-      height: 80,
-      backgroundColor: AppColors.white,
-      indicatorColor: AppColors.paleGreen,
-      labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-      destinations: [
-        const NavigationDestination(
-          icon: Icon(Icons.home_outlined),
-          selectedIcon: Icon(Icons.home),
-          label: 'Discover',
+    return Material(
+      color: AppColors.white,
+      child: SafeArea(
+        top: false,
+        child: SizedBox(
+          height: 80,
+          child: Row(
+              children: List.generate(_labels.length, (destination) {
+            final selected = index == destination;
+            final label = _labels[destination];
+            final icon = Icon(
+                selected ? _selectedIcons[destination] : _icons[destination],
+                color: AppColors.navy);
+            return Expanded(
+              child: Semantics(
+                container: true,
+                button: true,
+                selected: selected,
+                label: destination == 3 && unreadCount > 0
+                    ? '$label, $unreadCount unread'
+                    : label,
+                onTap: () => onTap(destination),
+                excludeSemantics: true,
+                child: InkWell(
+                  onTap: () => onTap(destination),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            width: 64,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              color: selected
+                                  ? AppColors.paleGreen
+                                  : AppColors.transparent,
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            alignment: Alignment.center,
+                            child: destination == 3
+                                ? Badge(
+                                    isLabelVisible: unreadCount > 0,
+                                    label: Text('$unreadCount'),
+                                    child: icon)
+                                : icon,
+                          ),
+                          const SizedBox(height: 4),
+                          // Fit the actual single-line label, including inherited text scaling.
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(label,
+                                maxLines: 1,
+                                softWrap: false,
+                                style: const TextStyle(
+                                    fontSize: 12, color: AppColors.navy)),
+                          ),
+                        ]),
+                  ),
+                ),
+              ),
+            );
+          })),
         ),
-        const NavigationDestination(
-          icon: Icon(Icons.map_outlined),
-          selectedIcon: Icon(Icons.map),
-          label: 'Map',
-        ),
-        const NavigationDestination(
-          icon: Icon(Icons.add_circle_outline),
-          selectedIcon: Icon(Icons.add_circle),
-          label: 'Post',
-        ),
-        NavigationDestination(
-            icon: Badge(
-                isLabelVisible: unreadCount > 0,
-                label: Text('$unreadCount'),
-                child: const Icon(Icons.notifications_outlined)),
-            selectedIcon: const Icon(Icons.notifications),
-            label: 'Notifications'),
-        const NavigationDestination(
-          icon: Icon(Icons.calendar_month_outlined),
-          selectedIcon: Icon(Icons.calendar_month),
-          label: 'My Page',
-        ),
-      ],
+      ),
     );
   }
 }

@@ -1,3 +1,7 @@
+> Current update: profile/event photos now use Supabase private storage. Follow [SUPABASE_SETUP.md](SUPABASE_SETUP.md) for the required one-time deployment. Firebase remains on Spark. Older statements below about removed uploads are superseded.
+
+> This is the Spark edition. Follow [SPARK_SETUP.md](SPARK_SETUP.md) for current setup and validation. Any photo-upload, Storage or Functions instructions below describe older versions.
+
 # Göod Together - Flutter
 
 This is the refactored Flutter version of the Figma Make volunteering app.

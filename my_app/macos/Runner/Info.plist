@@ -28,5 +28,7 @@
 	<string>MainMenu</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+<key>NSPhotoLibraryUsageDescription</key>
+<string>Choose a profile picture or an event photo to share with other members.</string>
 </dict>
 </plist>

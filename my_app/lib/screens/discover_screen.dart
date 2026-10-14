@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/opportunity.dart';
 import '../models/reward_progress.dart';
+import '../models/community_impact.dart';
 import '../theme/app_theme.dart';
 import '../widgets/category_chips.dart';
 import '../widgets/empty_state.dart';
@@ -21,6 +22,8 @@ class DiscoverScreen extends StatelessWidget {
   final VoidCallback onImpact;
   final VoidCallback onRewards;
   final RewardProgress rewards;
+  final CommunityImpact? communityImpact;
+  final String? impactStatus;
 
   const DiscoverScreen({
     super.key,
@@ -35,6 +38,8 @@ class DiscoverScreen extends StatelessWidget {
     required this.onImpact,
     required this.onRewards,
     this.rewards = const RewardProgress(),
+    this.communityImpact,
+    this.impactStatus,
   });
 
   @override
@@ -106,15 +111,15 @@ class DiscoverScreen extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(
+                    const Icon(
                       AppIcons.badge,
                       size: AppIconSizes.s14,
                       color: AppColors.darkBlue,
                     ),
-                    SizedBox(width: 5),
+                    const SizedBox(width: 5),
                     Flexible(
                         child: Text(
-                      'THIS MONTH’S IMPACT',
+                      '${communityImpact?.month ?? 'THIS MONTH'} · IMPACT',
                       style: AppTextStyles.captionAccentBold,
                     )),
                   ],
@@ -126,20 +131,24 @@ class DiscoverScreen extends StatelessWidget {
                 style: AppTextStyles.heroTitle,
               ),
               const SizedBox(height: 9),
-              const Wrap(
+              Wrap(
                 spacing: 15,
                 runSpacing: 8,
                 children: [
                   Text(
-                    '428\nhours shared',
+                    '${communityImpact?.hours.toStringAsFixed(1) ?? '—'}\nhours shared',
                     style: AppTextStyles.captionMuted,
                   ),
                   Text(
-                    '312\nneighbors',
+                    '${communityImpact?.accounts ?? '—'}\nmembers',
                     style: AppTextStyles.captionMuted,
                   ),
                 ],
               ),
+              if (impactStatus != null) ...[
+                const SizedBox(height: 8),
+                Text(impactStatus!, style: AppTextStyles.captionMuted),
+              ],
               const SizedBox(height: 10),
               TextButton.icon(
                 onPressed: onImpact,
@@ -174,17 +183,17 @@ class DiscoverScreen extends StatelessWidget {
         ),
         child: Row(
           children: [
-            IconBox(
+            const IconBox(
               icon: AppIcons.badge,
               color: AppColors.green,
               size: AppIconSizes.s46,
             ),
-            SizedBox(width: 10),
+            const SizedBox(width: 10),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
+                  const Text(
                     'YOUR CONTRIBUTION',
                     style: AppTextStyles.captionAccentBold,
                   ),
@@ -192,14 +201,15 @@ class DiscoverScreen extends StatelessWidget {
                     '${rewards.hours.toStringAsFixed(1)} hours shared · ${rewards.badgesEarned} badges earned',
                     style: AppTextStyles.captionBold,
                   ),
-                  SizedBox(height: 5),
+                  const SizedBox(height: 5),
                   LinearProgressIndicator(
                     value: rewards.progress,
                     minHeight: 4,
                     backgroundColor: AppColors.progressTrack,
-                    valueColor: AlwaysStoppedAnimation(AppColors.darkBlue),
+                    valueColor:
+                        const AlwaysStoppedAnimation(AppColors.darkBlue),
                   ),
-                  SizedBox(height: 3),
+                  const SizedBox(height: 3),
                   Text(
                     '${rewards.remaining} more shifts until level ${rewards.level + 1}',
                     style: AppTextStyles.captionMuted,
@@ -207,8 +217,8 @@ class DiscoverScreen extends StatelessWidget {
                 ],
               ),
             ),
-            SizedBox(width: 7),
-            Icon(Icons.chevron_right, color: AppColors.muted),
+            const SizedBox(width: 7),
+            const Icon(Icons.chevron_right, color: AppColors.muted),
           ],
         ),
       ),

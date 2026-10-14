@@ -1,3 +1,5 @@
+> This is the Spark edition. Follow [SPARK_SETUP.md](SPARK_SETUP.md) for current setup and validation. Any photo-upload, Storage or Functions instructions below describe older versions.
+
 # Latest app changes
 
 1. Appearance is centralized in `lib/theme/app_theme.dart`: AppColors, AppFonts, AppTextStyles, AppRadii, AppSpacing, AppIconSizes and widget theme defaults. Change the constants, then hot reload; if a font-family change does not refresh, hot restart. Existing appearance and map behavior are preserved.

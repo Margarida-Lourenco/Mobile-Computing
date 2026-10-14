@@ -5,7 +5,7 @@ import 'package:good_together/models/opportunity.dart';
 import 'package:good_together/theme/app_theme.dart';
 import 'package:good_together/widgets/sheets/post_opportunity_sheet.dart';
 
-Opportunity validEvent() => Opportunity(
+Opportunity validEvent({bool withEnd = true}) => Opportunity(
     id: 'test',
     title: 'Help neighbors',
     organization: 'Host',
@@ -19,7 +19,8 @@ Opportunity validEvent() => Opportunity(
     icon: Icons.people,
     latitude: 57.7,
     longitude: 11.9,
-    startsAt: DateTime(2027, 10, 7, 10));
+    startsAt: DateTime(2027, 10, 7, 10),
+    endsAt: withEnd ? DateTime(2027, 10, 7, 12) : null);
 Future<void> openForm(WidgetTester tester,
     {Opportunity? existing,
     required Future<void> Function() save,
@@ -34,7 +35,7 @@ Future<void> openForm(WidgetTester tester,
                       isScrollControlled: true,
                       builder: (_) => PostOpportunitySheet(
                           existing: existing,
-                          onSave: (_, __) => save(),
+                          onSave: (_, photo) => save(),
                           onPublished: (_) => published())),
                   child: const Text('Open'))))));
   await tester.tap(find.text('Open'));
@@ -44,6 +45,19 @@ Future<void> openForm(WidgetTester tester,
 }
 
 void main() {
+  testWidgets('end time is mandatory even when all other details are filled',
+      (tester) async {
+    var saves = 0;
+    await openForm(tester, existing: validEvent(withEnd: false),
+        save: () async {
+      saves++;
+    }, published: () {});
+    await tester.tap(find.text('Publish opportunity'));
+    await tester.pumpAndSettle();
+    expect(saves, 0);
+    expect(find.text('Please add: end time.'), findsOneWidget);
+  });
+
   testWidgets(
       'missing details are visible beside Publish and no save is attempted',
       (tester) async {

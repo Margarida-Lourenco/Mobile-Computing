@@ -10,7 +10,9 @@ class RewardProgress {
   factory RewardProgress.fromShifts(
       Iterable<Opportunity> events, Set<String> joined, DateTime now) {
     final shifts = events.where(
-        (e) => joined.contains(e.id) && !e.cancelled && e.hasEnded(now));
+        (e) => joined.contains(e.id) && !e.cancelled &&
+            e.startsAt != null && e.endsAt != null &&
+            e.endsAt!.isAfter(e.startsAt!) && !e.endsAt!.isAfter(now));
     var hours = 0.0;
     for (final shift in shifts) {
       if (shift.startsAt != null && shift.endsAt != null) {

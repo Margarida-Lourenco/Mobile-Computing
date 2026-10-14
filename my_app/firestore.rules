@@ -18,7 +18,7 @@ service cloud.firestore {
         && d.get('attendeeCount',0) is int && d.get('attendeeCount',0) >= 0 && d.get('attendeeCount',0) <= d.spots
         && d.latitude is number && d.latitude >= -90 && d.latitude <= 90
         && d.longitude is number && d.longitude >= -180 && d.longitude <= 180
-        && d.startsAt is timestamp && (d.get('endsAt',null) == null || (d.endsAt is timestamp && d.endsAt > d.startsAt))
+        && d.startsAt is timestamp && d.endsAt is timestamp && d.endsAt > d.startsAt
         && d.imageUrls is list && d.imageUrls.size() <= 1 && (d.coverImageUrl == null || d.coverImageUrl is string)
         && d.createdAt is timestamp && d.updatedAt == request.time;
     }
@@ -34,6 +34,7 @@ service cloud.firestore {
       let a = getAfter(eventPath(id)).data;
       let entering = a.lastAction == 'joined';
       return signedIn() && !b.get('cancelled',false)
+        && (b.get('endsAt',null) == null ? b.startsAt > request.time : b.endsAt > request.time)
         && a.lastActorId == request.auth.uid && a.lastAction in ['joined','left']
         && a.updatedAt == request.time && a.attendanceRevision == b.get('attendanceRevision',0)+1
         && a.attendeeCount == b.get('attendeeCount',0) + (entering ? 1 : -1)
@@ -52,7 +53,7 @@ service cloud.firestore {
         && request.resource.data.cancelled == false
         && !request.resource.data.keys().hasAny(['lastActorId','lastAction']);
       allow update: if signedIn() && (
-        (resource.data.ownerId == request.auth.uid && validEvent(request.resource.data)
+        (resource.data.ownerId == request.auth.uid && (validEvent(request.resource.data) || (request.resource.data.cancelled == true && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['cancelled','updatedAt']) && request.resource.data.updatedAt == request.time))
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['organization','title','date','time','place','distance','category','description','spots','latitude','longitude','coverImageUrl','imageUrls','startsAt','endsAt','updatedAt','cancelled'])
           && (!resource.data.get('cancelled',false) || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['updatedAt'])))
         || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['attendeeCount','attendanceRevision','lastActorId','lastAction','updatedAt']) && transition(id))
@@ -86,6 +87,40 @@ service cloud.firestore {
       return e.ownerId == request.auth.uid && e.get('cancelled',false) && d.kind == 'cancelled'
         && key == d.eventId + '_cancelled' && d.title == e.title && d.revision == 0
         && exists(/databases/$(database)/documents/opportunities/$(d.eventId)/attendees/$(uid));
+    }
+    function memberPath(uid) {
+      return /databases/$(database)/documents/members/$(uid);
+    }
+    function memberStatsPath() {
+      return /databases/$(database)/documents/communityStats/members;
+    }
+    function previousMemberCount() {
+      return exists(memberStatsPath()) ? get(memberStatsPath()).data.accounts : 0;
+    }
+    function validMemberMarker(d) {
+      return d.keys().hasOnly(['createdAt']) && d.createdAt == request.time;
+    }
+    function validMemberCount(d) {
+      return signedIn() && d.keys().hasOnly(['accounts','updatedAt'])
+        && d.accounts is int && d.accounts == previousMemberCount() + 1
+        && d.updatedAt == request.time
+        && !exists(memberPath(request.auth.uid))
+        && existsAfter(memberPath(request.auth.uid))
+        && validMemberMarker(getAfter(memberPath(request.auth.uid)).data)
+        && existsAfter(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+    match /communityStats/members {
+      allow read: if signedIn();
+      allow create, update: if validMemberCount(request.resource.data);
+      allow delete: if false;
+    }
+    match /members/{uid} {
+      allow get: if signedIn() && request.auth.uid == uid;
+      allow list: if false;
+      allow create: if signedIn() && request.auth.uid == uid
+        && validMemberMarker(request.resource.data)
+        && validMemberCount(getAfter(memberStatsPath()).data);
+      allow update, delete: if false;
     }
     match /users/{uid} {
       allow read: if signedIn() && request.auth.uid == uid;

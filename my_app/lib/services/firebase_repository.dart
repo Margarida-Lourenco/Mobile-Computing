@@ -1,31 +1,25 @@
+import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_storage/firebase_storage.dart';
-import 'package:image_picker/image_picker.dart';
 import '../models/opportunity.dart';
 import '../models/app_notification.dart';
+import 'member_registry.dart';
+import 'supabase_images.dart';
 import 'attendance_change.dart';
 import '../screens/edit_info_screen.dart';
 
 class FirebaseRepository {
   final db = FirebaseFirestore.instance;
   final auth = FirebaseAuth.instance;
-  final storage = FirebaseStorage.instance;
   String get uid => auth.currentUser!.uid;
   String newEventId() => db.collection('opportunities').doc().id;
   Future<void> ensureProfile() async {
     final user = auth.currentUser!;
-    final ref = db.doc('users/${user.uid}');
-    await db.runTransaction((transaction) async {
-      if (!(await transaction.get(ref)).exists) {
-        transaction.set(ref, {
-          'username':
-              user.displayName ?? user.email?.split('@').first ?? 'Member',
-          'name': user.displayName ?? user.email?.split('@').first ?? 'Member',
-          'location': '',
-          'profileImageUrl': null
-        });
-      }
+    await MemberRegistry.ensureProfile(db, user.uid, {
+      'username': user.displayName ?? user.email?.split('@').first ?? 'Member',
+      'name': user.displayName ?? user.email?.split('@').first ?? 'Member',
+      'location': '',
+      'profileImageUrl': null,
     });
   }
 
@@ -37,6 +31,13 @@ class FirebaseRepository {
           .toList()
         ..sort((a, b) => (b.startsAt ?? DateTime(2000))
             .compareTo(a.startsAt ?? DateTime(2000))));
+  Future<void> registerMember() => MemberRegistry.registerMember(db, uid);
+
+  Stream<int?> memberCount() => db
+      .doc('communityStats/members')
+      .snapshots()
+      .map((snapshot) => (snapshot.data()?['accounts'] as num?)?.toInt());
+
   Stream<ProfileInfo> profile() =>
       db.doc('users/$uid').snapshots().map((d) => ProfileInfo(
           username: d.data()?['username'] as String? ?? '',
@@ -91,7 +92,8 @@ class FirebaseRepository {
       if (!snapshot.exists) throw StateError('This event no longer exists.');
       final event = snapshot.data()!;
       if (Opportunity.fromFirestore(id, event).hasEnded(DateTime.now())) {
-        throw StateError('This shift has ended. Its participation history is retained.');
+        throw StateError(
+            'This shift has ended. Its participation history is retained.');
       }
       if (membership.exists && !existing.exists) {
         throw StateError(
@@ -143,68 +145,59 @@ class FirebaseRepository {
     });
   }
 
-  Future<String> upload(XFile image, String path) async {
-    final bytes = await image.readAsBytes();
-    if (bytes.length >= 5 * 1024 * 1024) {
-      throw StateError('Choose an image smaller than 5 MB.');
-    }
-    final mime = image.mimeType ??
-        (image.name.toLowerCase().endsWith('.png')
-            ? 'image/png'
-            : 'image/jpeg');
-    if (!mime.startsWith('image/')) throw StateError('Choose an image file.');
-    final ref = storage.ref(path);
-    await ref.putData(bytes, SettableMetadata(contentType: mime));
-    return ref.getDownloadURL();
-  }
-
-  Future<void> removeOwnedPhoto(String? url, String prefix) async {
-    if (url == null) return;
+  Future<void> _cleanupPhoto(String? reference) async {
     try {
-      final ref = storage.refFromURL(url);
-      if (ref.bucket == storage.ref().bucket &&
-          ref.fullPath.startsWith(prefix)) {
-        await ref.delete();
-      }
-    } catch (_) {
-      /* A committed save remains successful; cleanup may be retried by an administrator. */
+      await SupabaseImages.instance.deleteOwned(reference);
+    } catch (error) {
+      /* A committed save stays successful; cleanup can be retried. */
     }
   }
 
   Future<void> saveProfile(ProfileInfo info) async {
-    final photo = info.selectedImage;
-    final path = 'profile_images/$uid/${DateTime.now().microsecondsSinceEpoch}';
-    String? url;
+    String? uploaded;
+    String? oldReference;
+    String? savedReference;
     try {
-      url = photo == null ? info.imageUrl : await upload(photo, path);
-      await db.doc('users/$uid').set({
-        'name': info.name,
-        'location': info.location,
-        'profileImageUrl': url
-      }, SetOptions(merge: true));
-      if (photo != null) {
-        await removeOwnedPhoto(info.imageUrl, 'profile_images/$uid/');
+      if (info.selectedImage != null) {
+        uploaded = await SupabaseImages.instance
+            .upload('profile-images', info.selectedImage!);
       }
+      final ref = db.doc('users/$uid');
+      await db.runTransaction((tx) async {
+        final snapshot = await tx.get(ref);
+        oldReference = snapshot.data()?['profileImageUrl'] as String?;
+        savedReference = uploaded ?? (info.removeImage ? null : oldReference);
+        tx.set(
+            ref,
+            {
+              'name': info.name,
+              'location': info.location,
+              'profileImageUrl': savedReference
+            },
+            SetOptions(merge: true));
+      });
     } catch (_) {
-      if (photo != null) {
-        try {
-          await storage.ref(path).delete();
-        } catch (_) {}
-      }
+      if (uploaded != null) await _cleanupPhoto(uploaded);
       rethrow;
     }
+    if (oldReference != savedReference) await _cleanupPhoto(oldReference);
   }
 
-  Future<void> saveEvent(Opportunity event, XFile? photo,
-      {bool update = false}) async {
+  Future<void> saveEvent(Opportunity event,
+      {Uint8List? photo, bool update = false}) async {
+    if (event.startsAt == null ||
+        event.endsAt == null ||
+        !event.endsAt!.isAfter(event.startsAt!)) {
+      throw StateError('Choose a start time and a later end time.');
+    }
+    String? uploaded;
+    String? previousPhoto;
+    String? savedPhoto;
     final ref = db.doc('opportunities/${event.id}');
-    final path =
-        'event_images/$uid/${event.id}/${DateTime.now().microsecondsSinceEpoch}';
-    String? url;
     try {
-      url = photo == null
-          ? (event.removeCoverImage ? null : event.coverImageUrl)
-          : await upload(photo, path);
+      if (photo != null) {
+        uploaded = await SupabaseImages.instance.upload('event-images', photo);
+      }
       await db.runTransaction((tx) async {
         final snapshot = await tx.get(ref);
         final previous = snapshot.data();
@@ -222,14 +215,17 @@ class FirebaseRepository {
           throw StateError(
               'There are already $count volunteers. Capacity cannot be lower than that.');
         }
+        previousPhoto = previous?['coverImageUrl'] as String?;
+        savedPhoto =
+            uploaded ?? (event.removeCoverImage ? null : previousPhoto);
         final data = {
           ...event.toFirestore(),
           'ownerId': uid,
-          'coverImageUrl': url,
-          'imageUrls': url == null ? <String>[] : [url],
+          'coverImageUrl': savedPhoto,
+          'imageUrls': savedPhoto == null ? <String>[] : [savedPhoto!],
           'createdAt':
               update ? previous!['createdAt'] : FieldValue.serverTimestamp(),
-          'updatedAt': FieldValue.serverTimestamp()
+          'updatedAt': FieldValue.serverTimestamp(),
         };
         if (update) {
           tx.update(ref, data);
@@ -242,18 +238,11 @@ class FirebaseRepository {
           });
         }
       });
-      if (photo != null || event.removeCoverImage) {
-        await removeOwnedPhoto(
-            event.coverImageUrl, 'event_images/$uid/${event.id}/');
-      }
     } catch (_) {
-      if (photo != null) {
-        try {
-          await storage.ref(path).delete();
-        } catch (_) {}
-      }
+      if (uploaded != null) await _cleanupPhoto(uploaded);
       rethrow;
     }
+    if (previousPhoto != savedPhoto) await _cleanupPhoto(previousPhoto);
   }
 
   Future<void> deleteEvent(Opportunity event) async {

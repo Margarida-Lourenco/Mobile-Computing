@@ -1,3 +1,5 @@
+> This is the Spark edition. Follow [SPARK_SETUP.md](SPARK_SETUP.md) for current setup and validation. Any photo-upload, Storage or Functions instructions below describe older versions.
+
 # Change the app appearance
 
 Open `lib/theme/app_theme.dart`. All custom colors, font sizes, weights, text presets, corner radii, padding and icon-size values are defined here. Screens/widgets use these constants; map coordinates and interaction logic remain in their original files.

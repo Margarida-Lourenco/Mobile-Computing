@@ -41,7 +41,14 @@ class _AuthScreenState extends State<AuthScreen> {
       }
     } on FirebaseAuthException catch (e) {
       if (mounted) setState(() => error = e.message ?? 'Sign in failed.');
+    } on FirebaseException catch (e) {
+      debugPrint('Account setup failed (${e.plugin}/${e.code}): ${e.message}');
+      if (mounted) {
+        setState(() => error =
+            'Could not finish account setup (${e.code}). Please try again.');
+      }
     } catch (e) {
+      debugPrint('Account setup failed: $e');
       if (mounted) {
         setState(() => error =
             'Could not create your account. Check your connection and Firebase rules.');

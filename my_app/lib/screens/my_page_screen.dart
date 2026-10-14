@@ -6,6 +6,7 @@ import '../widgets/empty_state.dart';
 import '../widgets/opportunity_card.dart';
 import '../widgets/section_title.dart';
 import '../widgets/event_calendar.dart';
+import '../widgets/event_photo.dart';
 import 'edit_info_screen.dart';
 
 class MyPageScreen extends StatefulWidget {
@@ -20,7 +21,6 @@ class MyPageScreen extends StatefulWidget {
   final ProfileInfo profile;
   final VoidCallback onEditInfo;
   final VoidCallback? onSignOut;
-  final RewardProgress rewards;
 
   const MyPageScreen({
     super.key,
@@ -35,7 +35,6 @@ class MyPageScreen extends StatefulWidget {
     required this.profile,
     required this.onEditInfo,
     this.onSignOut,
-    this.rewards = const RewardProgress(),
   });
 
   @override
@@ -51,6 +50,8 @@ class _MyPageScreenState extends State<MyPageScreen> {
   @override
   Widget build(BuildContext context) {
     final now = DateTime.now();
+    final rewards =
+        RewardProgress.fromShifts(widget.opportunities, widget.joined, now);
     final allJoined = widget.opportunities
         .where((o) => widget.joined.contains(o.id) && !o.cancelled)
         .toList();
@@ -64,13 +65,15 @@ class _MyPageScreenState extends State<MyPageScreen> {
         .where((o) => widget.favorites.contains(o.id))
         .toList();
 
-    final visibleJoined = pastShifts ? pastItems : calendar
-        ? joinedItems
-            .where((e) =>
-                e.startsAt != null &&
-                DateUtils.isSameDay(e.startsAt, selectedDate))
-            .toList()
-        : joinedItems;
+    final visibleJoined = pastShifts
+        ? pastItems
+        : calendar
+            ? joinedItems
+                .where((e) =>
+                    e.startsAt != null &&
+                    DateUtils.isSameDay(e.startsAt, selectedDate))
+                .toList()
+            : joinedItems;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -80,13 +83,16 @@ class _MyPageScreenState extends State<MyPageScreen> {
             CircleAvatar(
               radius: 30,
               backgroundColor: AppColors.paleGreen,
-              foregroundImage: widget.profile.imageUrl == null
-                  ? null
-                  : NetworkImage(widget.profile.imageUrl!),
-              child: Text(
-                widget.profile.initials,
-                style: AppTextStyles.avatarInitials,
-              ),
+              child: widget.profile.imageUrl == null
+                  ? Text(widget.profile.initials,
+                      style: AppTextStyles.avatarInitials)
+                  : ClipOval(
+                      child: EventPhoto(
+                          reference: widget.profile.imageUrl!,
+                          width: 60,
+                          height: 60,
+                          fallback: Text(widget.profile.initials,
+                              style: AppTextStyles.avatarInitials))),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -128,23 +134,23 @@ class _MyPageScreenState extends State<MyPageScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'LEVEL ${widget.rewards.level} · ${widget.rewards.title.toUpperCase()}',
+                        'LEVEL ${rewards.level} · ${rewards.title.toUpperCase()}',
                         style: AppTextStyles.captionAccentBold,
                       ),
-                      SizedBox(height: 3),
-                      Text(
+                      const SizedBox(height: 3),
+                      const Text(
                         'Your good deeds earn badges',
                         style: AppTextStyles.bodyBold,
                       ),
                       Text(
-                        '${widget.rewards.badgesEarned} badges earned · ${widget.rewards.completed} completed shifts',
+                        '${rewards.badgesEarned} badges earned · ${rewards.completed} completed shifts',
                         style: AppTextStyles.captionMuted,
                       ),
                     ],
                   ),
                 ),
-                Icon(AppIcons.badge, color: AppColors.darkBlue),
-                Icon(Icons.chevron_right, color: AppColors.muted),
+                const Icon(AppIcons.badge, color: AppColors.darkBlue),
+                const Icon(Icons.chevron_right, color: AppColors.muted),
               ],
             ),
           ),
@@ -176,33 +182,35 @@ class _MyPageScreenState extends State<MyPageScreen> {
                                     borderRadius:
                                         BorderRadius.circular(AppRadii.r12))),
                             onPressed: () => setState(() => activityTab = tab),
-                            child: Text('$tab (${tab == 'My shifts' ? joinedItems.length : tab == 'Posted' ? postedItems.length : favoriteItems.length})',
-                                maxLines: 1, overflow: TextOverflow.ellipsis))))
+                            child: Text(
+                                '$tab (${tab == 'My shifts' ? joinedItems.length : tab == 'Posted' ? postedItems.length : favoriteItems.length})',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis))))
                     .toList())),
         if (activityTab == 'My shifts') ...[
           const SizedBox(height: 14),
-          Wrap(alignment: WrapAlignment.end, spacing: 4, children: [
-            TextButton.icon(
-                onPressed: () => setState(() { calendar = false; pastShifts = false; }),
-                icon: Icon(Icons.view_agenda_outlined,
-                    color: !calendar && !pastShifts ? AppColors.navy : AppColors.muted),
-                label: Text('Agenda',
-                    style: !calendar && !pastShifts
-                        ? AppTextStyles.bodyBold
-                        : AppTextStyles.bodyMuted)),
-            TextButton.icon(
-                onPressed: () => setState(() { calendar = true; pastShifts = false; }),
-                icon: Icon(Icons.calendar_month_outlined,
-                    color: calendar && !pastShifts ? AppColors.navy : AppColors.muted),
-                label: Text('Calendar',
-                    style: calendar && !pastShifts
-                        ? AppTextStyles.bodyBold
-                        : AppTextStyles.bodyMuted)),
-            TextButton.icon(
-                onPressed: () => setState(() => pastShifts = true),
-                icon: const Icon(Icons.history),
-                label: Text('Past shifts (${pastItems.length})',
-                    style: pastShifts ? AppTextStyles.bodyBold : AppTextStyles.bodyMuted))
+          Row(children: [
+            Expanded(
+                child: _viewTab(
+                    'Agenda',
+                    Icons.view_agenda_outlined,
+                    !calendar && !pastShifts,
+                    () => setState(() {
+                          calendar = false;
+                          pastShifts = false;
+                        }))),
+            Expanded(
+                child: _viewTab(
+                    'Calendar',
+                    Icons.calendar_month_outlined,
+                    calendar && !pastShifts,
+                    () => setState(() {
+                          calendar = true;
+                          pastShifts = false;
+                        }))),
+            Expanded(
+                child: _viewTab('Past shifts', Icons.history, pastShifts,
+                    () => setState(() => pastShifts = true))),
           ]),
           if (calendar && !pastShifts)
             EventCalendar(
@@ -231,7 +239,11 @@ class _MyPageScreenState extends State<MyPageScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    pastShifts ? '${visibleJoined.length} past shifts' : !calendar ? '${visibleJoined.length} upcoming shifts' : '${selectedDate.day} ${_month(selectedDate.month)} ${selectedDate.year} · ${visibleJoined.length} shifts',
+                    pastShifts
+                        ? '${visibleJoined.length} past shifts'
+                        : !calendar
+                            ? '${visibleJoined.length} upcoming shifts'
+                            : '${selectedDate.day} ${_month(selectedDate.month)} ${selectedDate.year} · ${visibleJoined.length} shifts',
                     maxLines: 2,
                     style: AppTextStyles.bodyBold,
                   ),
@@ -247,7 +259,9 @@ class _MyPageScreenState extends State<MyPageScreen> {
           ...visibleJoined.map(_card),
           if (visibleJoined.isEmpty)
             EmptyState(
-              text: pastShifts ? 'No past shifts yet. Completed shifts will appear here.' : 'No shifts here. Choose Discover to find a small way to help.',
+              text: pastShifts
+                  ? 'No past shifts yet. Completed shifts will appear here.'
+                  : 'No shifts here. Choose Discover to find a small way to help.',
             ),
         ] else if (activityTab == 'Posted') ...[
           const SizedBox(height: 16),
@@ -279,6 +293,30 @@ class _MyPageScreenState extends State<MyPageScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _viewTab(
+      String label, IconData icon, bool selected, VoidCallback onTap) {
+    return TextButton(
+      onPressed: onTap,
+      style: TextButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        foregroundColor: selected ? AppColors.navy : AppColors.muted,
+      ),
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          Icon(icon, size: 16),
+          const SizedBox(width: 4),
+          Text(label,
+              maxLines: 1,
+              softWrap: false,
+              style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: selected ? FontWeight.bold : FontWeight.normal)),
+        ]),
+      ),
     );
   }
 

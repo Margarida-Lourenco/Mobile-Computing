@@ -27,7 +27,7 @@ class OpportunityCard extends StatelessWidget {
       child: Row(
         children: [
           if (item.coverImageUrl != null)
-            EventPhoto(url: item.coverImageUrl!, height: 60, width: 60)
+            EventPhoto(reference: item.coverImageUrl!, height: 60, width: 60)
           else
             IconBox(
               icon: item.icon,

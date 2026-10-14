@@ -1,18 +1,18 @@
+import 'dart:typed_data';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:latlong2/latlong.dart';
 import '../../screens/pick_location_screen.dart';
 import '../../models/opportunity.dart';
 import '../../theme/app_theme.dart';
 import '../app_sheet.dart';
 import '../small_kicker.dart';
-import '../event_photo.dart';
+import '../photo_editor.dart';
 
 class PostOpportunitySheet extends StatefulWidget {
   final ValueChanged<Opportunity> onPublished;
-  final Future<void> Function(Opportunity, XFile?) onSave;
+  final Future<void> Function(Opportunity, Uint8List?) onSave;
   final Opportunity? existing;
   final String Function()? newId;
 
@@ -36,9 +36,9 @@ class _PostOpportunitySheetState extends State<PostOpportunitySheet> {
   final spots = TextEditingController(text: '4');
 
   late final String draftId;
-  XFile? photo;
-  bool removeCover = false;
   bool busy = false;
+  Uint8List? photo;
+  bool removePhoto = false;
   bool slowSave = false;
   Timer? saveTimer;
   final submitArea = GlobalKey();
@@ -110,57 +110,20 @@ class _PostOpportunitySheetState extends State<PostOpportunitySheet> {
                   style: AppTextStyles.bodyMuted,
                 ),
                 const SizedBox(height: 20),
-                if (photo != null)
-                  FutureBuilder(
-                      future: photo!.readAsBytes(),
-                      builder: (c, s) => s.data == null
-                          ? const SizedBox()
-                          : Image.memory(s.data!, height: 150)),
-                if (photo == null &&
-                    !removeCover &&
-                    widget.existing?.coverImageUrl != null)
-                  EventPhoto(
-                      url: widget.existing!.coverImageUrl!,
-                      width: double.infinity),
-                if (photo != null ||
-                    (!removeCover && widget.existing?.coverImageUrl != null))
-                  TextButton.icon(
-                      onPressed: busy
-                          ? null
-                          : () => setState(() {
-                                photo = null;
-                                removeCover = true;
-                              }),
-                      icon: const Icon(Icons.delete_outline),
-                      label: const Text('Remove cover photo')),
-                OutlinedButton.icon(
-                    onPressed: busy
-                        ? null
-                        : () async {
-                            try {
-                              final selected = await ImagePicker().pickImage(
-                                  source: ImageSource.gallery,
-                                  maxWidth: 1600,
-                                  imageQuality: 85);
-                              if (mounted && selected != null) {
-                                setState(() {
-                                  photo = selected;
-                                  removeCover = false;
-                                });
-                              }
-                            } catch (e) {
-                              if (mounted) {
-                                setState(
-                                    () => error = 'Could not select image: $e');
-                              }
-                            }
-                          },
-                    icon: const Icon(Icons.photo),
-                    label: Text(photo != null ||
-                            (!removeCover &&
-                                widget.existing?.coverImageUrl != null)
-                        ? 'Change cover photo'
-                        : 'Choose event cover photo')),
+                PhotoEditor(
+                    label: 'Choose event cover photo',
+                    busy: busy,
+                    reference:
+                        removePhoto ? null : widget.existing?.coverImageUrl,
+                    selected: photo,
+                    onSelected: (bytes) => setState(() {
+                          photo = bytes;
+                          removePhoto = false;
+                        }),
+                    onRemove: () => setState(() {
+                          photo = null;
+                          removePhoto = true;
+                        })),
                 _field(
                     'Opportunity title', title, 'e.g. Pack weekend food bags'),
                 _field('Host', organization, 'Your name or organization'),
@@ -209,7 +172,7 @@ class _PostOpportunitySheetState extends State<PostOpportunitySheet> {
                     onPressed: busy ? null : _pickEndTime,
                     icon: const Icon(Icons.schedule),
                     label: Text(end == null
-                        ? 'End time (optional)'
+                        ? 'End time (required)'
                         : 'Ends ${end!.format(context)}')),
                 _field('Address', place, 'Street or meeting point'),
                 OutlinedButton.icon(
@@ -343,6 +306,7 @@ class _PostOpportunitySheetState extends State<PostOpportunitySheet> {
       if (description.text.trim().isEmpty) 'description',
       if (date == null) 'date',
       if (start == null) 'start time',
+      if (end == null) 'end time',
       if (mapPoint == null) 'map pin (choose Use this location)',
       if ((int.tryParse(spots.text) ?? 0) <= 0 ||
           (int.tryParse(spots.text) ?? 0) > 10000)
@@ -361,8 +325,7 @@ class _PostOpportunitySheetState extends State<PostOpportunitySheet> {
       return;
     }
 
-    if (end != null &&
-        end!.hour * 60 + end!.minute <= start!.hour * 60 + start!.minute) {
+    if (end!.hour * 60 + end!.minute <= start!.hour * 60 + start!.minute) {
       setState(() => error =
           'Choose an end time later than the start time on the same date.');
       revealSubmitArea();
@@ -370,12 +333,10 @@ class _PostOpportunitySheetState extends State<PostOpportunitySheet> {
     }
     final opportunity = Opportunity(
       id: draftId,
-      removeCoverImage: removeCover,
+      removeCoverImage: removePhoto,
       attendeeCount: widget.existing?.attendeeCount ?? 0,
-      endsAt: end == null
-          ? null
-          : DateTime(
-              date!.year, date!.month, date!.day, end!.hour, end!.minute),
+      endsAt:
+          DateTime(date!.year, date!.month, date!.day, end!.hour, end!.minute),
       ownerId: widget.existing?.ownerId ?? '',
       coverImageUrl: widget.existing?.coverImageUrl,
       imageUrls: widget.existing?.imageUrls ?? const [],
@@ -438,7 +399,7 @@ class _PostOpportunitySheetState extends State<PostOpportunitySheet> {
   String publishError(Object error) {
     if (error is FirebaseException) {
       if (error.code == 'permission-denied' || error.code == 'unauthorized') {
-        return 'Firebase rejected the save. Check that you are signed in and the latest Firestore rules are published. If you selected a photo, check Storage setup and permissions. (${error.code})';
+        return 'Firebase rejected the save. Check that you are signed in and the latest Firestore rules are published. (${error.code})';
       }
       if (error.code == 'unavailable' ||
           error.code == 'network-request-failed') {

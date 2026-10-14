@@ -1,20 +1,23 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
-import 'package:image_picker/image_picker.dart';
+import '../widgets/photo_editor.dart';
 
 class ProfileInfo {
   final String username;
   final String name;
   final String location;
   final String? imageUrl;
-  final XFile? selectedImage;
+  final Uint8List? selectedImage;
+  final bool removeImage;
 
   const ProfileInfo(
       {this.username = '',
       required this.name,
       required this.location,
       this.imageUrl,
-      this.selectedImage});
+      this.selectedImage,
+      this.removeImage = false});
 
   String get displayUsername => username.isEmpty ? name : username;
   String get firstName =>
@@ -39,8 +42,9 @@ class EditInfoScreen extends StatefulWidget {
 }
 
 class _EditInfoScreenState extends State<EditInfoScreen> {
-  XFile? photo;
   bool busy = false;
+  Uint8List? photo;
+  bool removePhoto = false;
   String? error;
   Future<void> save() async {
     if (!formKey.currentState!.validate()) return;
@@ -50,7 +54,8 @@ class _EditInfoScreenState extends State<EditInfoScreen> {
         name: name.text.trim(),
         location: location.text.trim(),
         imageUrl: widget.profile.imageUrl,
-        selectedImage: photo);
+        selectedImage: photo,
+        removeImage: removePhoto);
     try {
       await widget.onSave?.call(info);
       if (mounted) {
@@ -100,33 +105,19 @@ class _EditInfoScreenState extends State<EditInfoScreen> {
                       'Update the details shown on My Page and in your greeting.',
                       style: AppTextStyles.bodyMuted),
                   const SizedBox(height: 24),
-                  if (photo != null)
-                    FutureBuilder(
-                        future: photo!.readAsBytes(),
-                        builder: (context, s) => s.data == null
-                            ? const SizedBox()
-                            : Image.memory(s.data!, height: 120)),
-                  OutlinedButton.icon(
-                      onPressed: busy
-                          ? null
-                          : () async {
-                              try {
-                                final selected = await ImagePicker().pickImage(
-                                    source: ImageSource.gallery,
-                                    maxWidth: 1600,
-                                    imageQuality: 85);
-                                if (mounted && selected != null) {
-                                  setState(() => photo = selected);
-                                }
-                              } catch (e) {
-                                if (mounted) {
-                                  setState(() =>
-                                      error = 'Could not select image: $e');
-                                }
-                              }
-                            },
-                      icon: const Icon(Icons.photo),
-                      label: const Text('Choose profile picture')),
+                  PhotoEditor(
+                      label: 'Choose profile picture',
+                      busy: busy,
+                      reference: removePhoto ? null : widget.profile.imageUrl,
+                      selected: photo,
+                      onSelected: (bytes) => setState(() {
+                            photo = bytes;
+                            removePhoto = false;
+                          }),
+                      onRemove: () => setState(() {
+                            photo = null;
+                            removePhoto = true;
+                          })),
                   if (error != null) Text(error!),
                   TextFormField(
                     controller: name,

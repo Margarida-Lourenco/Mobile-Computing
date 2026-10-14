@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'member_registry.dart';
 
 class AccountRegistration {
   static final inProgress = ValueNotifier<bool>(false);
@@ -11,16 +12,18 @@ class AccountRegistration {
         : 'Use 3–24 letters, numbers or underscores.';
   }
 
-  static Future<void> create(
-      String email, String password, String username) async {
+  static Future<void> create(String email, String password, String username,
+      {FirebaseAuth? authentication, FirebaseFirestore? database}) async {
+    final auth = authentication ?? FirebaseAuth.instance;
+    final db = database ?? FirebaseFirestore.instance;
     inProgress.value = true;
     User? created;
     try {
-      final result = await FirebaseAuth.instance
-          .createUserWithEmailAndPassword(email: email, password: password);
+      final result = await auth.createUserWithEmailAndPassword(
+          email: email, password: password);
       created = result.user!;
       await created.updateDisplayName(username);
-      await FirebaseFirestore.instance.doc('users/${created.uid}').set({
+      await MemberRegistry.ensureProfile(db, created.uid, {
         'username': username,
         'name': username,
         'location': '',
@@ -31,7 +34,7 @@ class AccountRegistration {
         try {
           await created.delete();
         } catch (_) {
-          await FirebaseAuth.instance.signOut();
+          await auth.signOut();
         }
       }
       rethrow;

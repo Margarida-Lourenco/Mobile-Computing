@@ -1,3 +1,5 @@
+> This is the Spark edition. Follow [SPARK_SETUP.md](SPARK_SETUP.md) for current setup and validation. Any photo-upload, Storage or Functions instructions below describe older versions.
+
 # Install the events and notifications update
 
 Your supplied Firebase configuration is already preserved in this ZIP. You do not need to create a new project or run flutterfire configure again.

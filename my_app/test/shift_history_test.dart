@@ -7,25 +7,50 @@ import 'package:good_together/screens/edit_info_screen.dart';
 import 'package:good_together/widgets/bottom_nav.dart';
 import 'package:good_together/widgets/opportunity_card.dart';
 
-Opportunity shift(String id, {DateTime? start, DateTime? end, bool cancelled = false}) => Opportunity(
-  id: id, title: id, organization: 'Helpers', date: '', time: '',
-  place: '', distance: '', category: 'Community', description: '',
-  spots: 4, icon: Icons.people, startsAt: start, endsAt: end, cancelled: cancelled);
+Opportunity shift(String id,
+        {DateTime? start, DateTime? end, bool cancelled = false}) =>
+    Opportunity(
+        id: id,
+        title: id,
+        organization: 'Helpers',
+        date: '',
+        time: '',
+        place: '',
+        distance: '',
+        category: 'Community',
+        description: '',
+        spots: 4,
+        icon: Icons.people,
+        startsAt: start,
+        endsAt: end,
+        cancelled: cancelled);
 
 void main() {
   final now = DateTime(2026, 10, 14, 12);
-  test('feed/map availability respects end boundary, cancellation and missing dates', () {
-    final ongoing = shift('ongoing', start: now.subtract(const Duration(hours: 1)), end: now.add(const Duration(hours: 1)));
+  test(
+      'feed/map availability respects end boundary, cancellation and missing dates',
+      () {
+    final ongoing = shift('ongoing',
+        start: now.subtract(const Duration(hours: 1)),
+        end: now.add(const Duration(hours: 1)));
     expect(ongoing.isAvailable(now), isTrue);
     expect(ongoing.isAvailable(now.add(const Duration(hours: 1))), isFalse);
-    expect(shift('past', end: now.subtract(const Duration(seconds: 1))).isAvailable(now), isFalse);
+    expect(
+        shift('past', end: now.subtract(const Duration(seconds: 1)))
+            .isAvailable(now),
+        isFalse);
     expect(shift('start-only', start: now).hasEnded(now), isTrue);
     expect(shift('unknown').isAvailable(now), isFalse);
-    expect(shift('cancelled', end: now.add(const Duration(days: 1)), cancelled: true).isAvailable(now), isFalse);
+    expect(
+        shift('cancelled',
+                end: now.add(const Duration(days: 1)), cancelled: true)
+            .isAvailable(now),
+        isFalse);
   });
   test('only joined, ended, non-cancelled shifts earn levels and hours', () {
     final events = [
-      shift('completed', start: now.subtract(const Duration(hours: 3)), end: now),
+      shift('completed',
+          start: now.subtract(const Duration(hours: 3)), end: now),
       shift('future', start: now.add(const Duration(days: 1))),
       shift('cancelled', end: now, cancelled: true),
       shift('unjoined', end: now),
@@ -34,7 +59,20 @@ void main() {
     expect(fresh.level, 1);
     expect(fresh.badgesEarned, 0);
     expect(fresh.progress, 0);
-    final earned = RewardProgress.fromShifts(events, {'completed', 'future', 'cancelled'}, now);
+    expect(
+        RewardProgress.fromShifts(
+                [shift('legacy', start: now.subtract(const Duration(days: 1)))],
+                {'legacy'},
+                now)
+            .level,
+        1);
+    expect(
+        RewardProgress.fromShifts(
+                [shift('invalid', start: now, end: now)], {'invalid'}, now)
+            .level,
+        1);
+    final earned = RewardProgress.fromShifts(
+        events, {'completed', 'future', 'cancelled'}, now);
     expect(earned.completed, 1);
     expect(earned.hours, 3);
     expect(earned.level, 2);
@@ -43,32 +81,72 @@ void main() {
     expect(const RewardProgress(completed: 5).level, 4);
     expect(const RewardProgress(completed: 10).level, 5);
   });
-  testWidgets('past shifts stay separate from agenda and calendar; sign out is at bottom', (tester) async {
+  testWidgets(
+      'past shifts stay separate from agenda and calendar; sign out is at bottom',
+      (tester) async {
     final today = DateTime.now();
-    final events = [shift('Past shift', end: today.subtract(const Duration(days: 1))), shift('Upcoming shift', start: today.add(const Duration(days: 1))), shift('Other past shift', end: today.subtract(const Duration(days: 1)))];
+    final events = [
+      shift('Past shift', end: today.subtract(const Duration(days: 1))),
+      shift('Upcoming shift', start: today.add(const Duration(days: 1))),
+      shift('Other past shift', end: today.subtract(const Duration(days: 1)))
+    ];
     var signedOut = false;
-    await tester.pumpWidget(MaterialApp(home: Scaffold(body: SingleChildScrollView(child: MyPageScreen(
-      opportunities: events, joined: {'Past shift', 'Upcoming shift'}, favorites: {}, posted: {},
+    await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+            body: SingleChildScrollView(
+                child: MyPageScreen(
+      opportunities: events,
+      joined: {'Past shift', 'Upcoming shift'},
+      favorites: {},
+      posted: {},
       profile: const ProfileInfo(name: 'Member', location: 'Gothenburg'),
-      onEditInfo: () {}, onOpen: (_) {}, onFavorite: (_) {}, onRewards: () {}, onPost: () {},
-      onSignOut: () { signedOut = true; },
+      onEditInfo: () {},
+      onOpen: (_) {},
+      onFavorite: (_) {},
+      onRewards: () {},
+      onPost: () {},
+      onSignOut: () {
+        signedOut = true;
+      },
     )))));
     expect(find.text('My shifts (1)'), findsOneWidget);
     expect(find.text('LEVEL 1 · NEW NEIGHBOR'), findsOneWidget);
-    await tester.ensureVisible(find.text('Past shifts (1)'));
-    await tester.tap(find.text('Past shifts (1)'));
+    await tester.ensureVisible(find.text('Past shifts'));
+    await tester.tap(find.text('Past shifts'));
     await tester.pump();
-    expect(tester.widgetList<OpportunityCard>(find.byType(OpportunityCard)).map((c) => c.item.id), ['Past shift']);
+    expect(
+        tester
+            .widgetList<OpportunityCard>(find.byType(OpportunityCard))
+            .map((c) => c.item.id),
+        ['Past shift']);
     await tester.ensureVisible(find.text('Agenda'));
     await tester.tap(find.text('Agenda'));
     await tester.pump();
-    expect(tester.widgetList<OpportunityCard>(find.byType(OpportunityCard)).map((c) => c.item.id), ['Upcoming shift']);
+    expect(
+        tester
+            .widgetList<OpportunityCard>(find.byType(OpportunityCard))
+            .map((c) => c.item.id),
+        ['Upcoming shift']);
     await tester.ensureVisible(find.text('Sign out'));
     await tester.tap(find.text('Sign out'));
     expect(signedOut, isTrue);
   });
   testWidgets('bottom navigation keeps every label visible', (tester) async {
-    await tester.pumpWidget(MaterialApp(home: Scaffold(bottomNavigationBar: AppBottomNav(index: 0, onTap: (_) {}))));
-    expect(tester.widget<NavigationBar>(find.byType(NavigationBar)).labelBehavior, NavigationDestinationLabelBehavior.alwaysShow);
+    await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+            bottomNavigationBar: AppBottomNav(index: 0, onTap: (_) {}))));
+    for (final label in [
+      'Discover',
+      'Map',
+      'Post',
+      'Notifications',
+      'My Page'
+    ]) {
+      expect(find.text(label), findsOneWidget);
+      expect(
+          tester.getBottomRight(find.text(label)).dy,
+          lessThanOrEqualTo(
+              tester.view.physicalSize.height / tester.view.devicePixelRatio));
+    }
   });
 }

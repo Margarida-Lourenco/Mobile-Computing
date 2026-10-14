@@ -35,7 +35,7 @@ class OpportunityDetailsSheet extends StatelessWidget {
               child: const Text('Close'))
         ]),
         if (item.coverImageUrl != null)
-          EventPhoto(url: item.coverImageUrl!, width: double.infinity),
+          EventPhoto(reference: item.coverImageUrl!, width: double.infinity),
         const SizedBox(height: 15),
         Text(item.organization.toUpperCase(),
             style: AppTextStyles.captionMutedBold),
@@ -78,12 +78,17 @@ class OpportunityDetailsSheet extends StatelessWidget {
                 label: const Text('Invite')),
           if (!item.cancelled)
             FilledButton(
-                onPressed: item.hasEnded(DateTime.now()) || (!isJoined && item.spotsLeft == 0) ? null : onJoin,
-                child: Text(item.hasEnded(DateTime.now()) ? 'Shift ended' : isJoined
-                    ? 'Leave event'
-                    : item.spotsLeft == 0
-                        ? 'Event full'
-                        : 'I want to help')),
+                onPressed: item.hasEnded(DateTime.now()) ||
+                        (!isJoined && item.spotsLeft == 0)
+                    ? null
+                    : onJoin,
+                child: Text(item.hasEnded(DateTime.now())
+                    ? 'Shift ended'
+                    : isJoined
+                        ? 'Leave event'
+                        : item.spotsLeft == 0
+                            ? 'Event full'
+                            : 'I want to help')),
         ]),
       ]));
   Widget _fact(IconData icon, String text) =>

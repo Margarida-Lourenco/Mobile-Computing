@@ -1,0 +1,6 @@
+project_id = "good-together"
+
+[functions.photo-api]
+# The handler verifies Firebase RS256 tokens, issuer, audience and expiry itself.
+# The Supabase gateway must not expect a Supabase Auth token here.
+verify_jwt = false
