@@ -78,8 +78,8 @@ class OpportunityDetailsSheet extends StatelessWidget {
                 label: const Text('Invite')),
           if (!item.cancelled)
             FilledButton(
-                onPressed: !isJoined && item.spotsLeft == 0 ? null : onJoin,
-                child: Text(isJoined
+                onPressed: item.hasEnded(DateTime.now()) || (!isJoined && item.spotsLeft == 0) ? null : onJoin,
+                child: Text(item.hasEnded(DateTime.now()) ? 'Shift ended' : isJoined
                     ? 'Leave event'
                     : item.spotsLeft == 0
                         ? 'Event full'

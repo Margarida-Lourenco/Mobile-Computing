@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/opportunity.dart';
+import '../models/reward_progress.dart';
 import '../theme/app_theme.dart';
 import '../widgets/category_chips.dart';
 import '../widgets/empty_state.dart';
@@ -19,6 +20,7 @@ class DiscoverScreen extends StatelessWidget {
   final ValueChanged<String> onFavorite;
   final VoidCallback onImpact;
   final VoidCallback onRewards;
+  final RewardProgress rewards;
 
   const DiscoverScreen({
     super.key,
@@ -32,6 +34,7 @@ class DiscoverScreen extends StatelessWidget {
     required this.onFavorite,
     required this.onImpact,
     required this.onRewards,
+    this.rewards = const RewardProgress(),
   });
 
   @override
@@ -70,6 +73,7 @@ class DiscoverScreen extends StatelessWidget {
 
   Widget _impactCard() {
     return Container(
+      width: double.infinity,
       constraints: const BoxConstraints(minHeight: 205),
       padding: const EdgeInsets.all(AppSpacing.s21),
       decoration: BoxDecoration(
@@ -99,7 +103,7 @@ class DiscoverScreen extends StatelessWidget {
                   color: AppColors.white.withValues(alpha: .55),
                   borderRadius: BorderRadius.circular(AppRadii.r20),
                 ),
-                child: const Row(
+                child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
@@ -168,7 +172,7 @@ class DiscoverScreen extends StatelessWidget {
           border: Border.all(color: AppColors.border),
           borderRadius: BorderRadius.circular(AppRadii.r18),
         ),
-        child: const Row(
+        child: Row(
           children: [
             IconBox(
               icon: AppIcons.badge,
@@ -185,19 +189,19 @@ class DiscoverScreen extends StatelessWidget {
                     style: AppTextStyles.captionAccentBold,
                   ),
                   Text(
-                    '3 hours shared · 2 badges earned',
+                    '${rewards.hours.toStringAsFixed(1)} hours shared · ${rewards.badgesEarned} badges earned',
                     style: AppTextStyles.captionBold,
                   ),
                   SizedBox(height: 5),
                   LinearProgressIndicator(
-                    value: .6,
+                    value: rewards.progress,
                     minHeight: 4,
                     backgroundColor: AppColors.progressTrack,
                     valueColor: AlwaysStoppedAnimation(AppColors.darkBlue),
                   ),
                   SizedBox(height: 3),
                   Text(
-                    '2 more activities until Local Hero',
+                    '${rewards.remaining} more shifts until level ${rewards.level + 1}',
                     style: AppTextStyles.captionMuted,
                   ),
                 ],

@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../services/firebase_repository.dart';
 import '../data/sample_opportunities.dart';
 import '../models/opportunity.dart';
+import '../models/reward_progress.dart';
 import '../widgets/join_confirmation.dart';
 import '../widgets/bottom_nav.dart';
 import '../widgets/header.dart';
@@ -32,6 +33,7 @@ class HomeShell extends StatefulWidget {
 class _HomeShellState extends State<HomeShell> {
   FirebaseRepository? repository;
   final List<StreamSubscription<dynamic>> subscriptions = [];
+  Timer? clockRefresh;
   bool loading = false, saving = false;
   String? loadError;
   List<AppNotification> notices = [];
@@ -118,6 +120,11 @@ class _HomeShellState extends State<HomeShell> {
   void initState() {
     super.initState();
     if (widget.connected) {
+      clockRefresh = Timer.periodic(const Duration(seconds: 30), (_) {
+        if (mounted) setState(() {});
+      });
+    }
+    if (widget.connected) {
       opportunities = [];
       profile = const ProfileInfo(name: 'Member', location: '');
       connect();
@@ -143,6 +150,7 @@ class _HomeShellState extends State<HomeShell> {
     for (final s in subscriptions) {
       s.cancel();
     }
+    clockRefresh?.cancel();
     searchController.dispose();
     super.dispose();
   }
@@ -151,7 +159,7 @@ class _HomeShellState extends State<HomeShell> {
     final query = searchController.text.toLowerCase();
 
     return opportunities.where((opportunity) {
-      if (opportunity.cancelled) return false;
+      if (!opportunity.isAvailable(DateTime.now())) return false;
       final matchesSearch = '${opportunity.title} '
               '${opportunity.organization} '
               '${opportunity.place}'
@@ -196,15 +204,6 @@ class _HomeShellState extends State<HomeShell> {
                               padding: EdgeInsets.all(AppSpacing.s8),
                               child: Text(
                                   'Preview mode · Firebase is not connected. See FIREBASE_SETUP.md.')),
-                        if (widget.connected)
-                          Align(
-                              alignment: Alignment.centerRight,
-                              child: TextButton(
-                                  onPressed: saving
-                                      ? null
-                                      : () => perform(() =>
-                                          FirebaseAuth.instance.signOut()),
-                                  child: const Text('Sign out'))),
                         if (saving || loading) const LinearProgressIndicator(),
                         if (loadError != null)
                           Column(children: [
@@ -274,6 +273,10 @@ class _HomeShellState extends State<HomeShell> {
           onFavorite: _toggleFavorite,
           onRewards: _showRewards,
           onPost: _showPost,
+          rewards: rewardProgress,
+          onSignOut: widget.connected && !saving
+              ? () => perform(() => FirebaseAuth.instance.signOut())
+              : null,
         );
       case 0:
       default:
@@ -287,6 +290,7 @@ class _HomeShellState extends State<HomeShell> {
           onCategory: (value) => setState(() => category = value),
           onOpen: _showDetails,
           onFavorite: _toggleFavorite,
+          rewards: rewardProgress,
           onImpact: () => setState(() => navIndex = 4),
           onRewards: _showRewards,
         );
@@ -398,12 +402,14 @@ class _HomeShellState extends State<HomeShell> {
     );
   }
 
+  RewardProgress get rewardProgress => RewardProgress.fromShifts(opportunities, joined, DateTime.now());
+
   void _showRewards() {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: AppColors.transparent,
-      builder: (_) => const RewardsSheet(),
+      builder: (_) => RewardsSheet(rewards: rewardProgress),
     );
   }
 

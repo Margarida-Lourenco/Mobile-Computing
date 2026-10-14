@@ -49,6 +49,14 @@ class Opportunity {
     this.removeCoverImage = false,
   });
 
+  /// End time defines completion; a missing end falls back to the start.
+  DateTime? get completionTime => endsAt ?? startsAt;
+  bool hasEnded(DateTime now) =>
+      completionTime != null && !completionTime!.isAfter(now);
+
+  bool isAvailable(DateTime now) =>
+      !cancelled && completionTime != null && !hasEnded(now);
+
   Map<String, dynamic> toFirestore() => {
         'organization': organization,
         'title': title,

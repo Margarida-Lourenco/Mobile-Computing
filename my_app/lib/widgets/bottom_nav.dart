@@ -21,7 +21,7 @@ class AppBottomNav extends StatelessWidget {
       height: 80,
       backgroundColor: AppColors.white,
       indicatorColor: AppColors.paleGreen,
-      labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
+      labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
       destinations: [
         const NavigationDestination(
           icon: Icon(Icons.home_outlined),

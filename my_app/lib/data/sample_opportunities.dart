@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import '../models/opportunity.dart';
 
-const sampleOpportunities = <Opportunity>[
+final sampleOpportunities = <Opportunity>[
   Opportunity(
     id: '1',
+    startsAt: DateTime.now().add(const Duration(hours: 1)),
+    endsAt: DateTime.now().add(const Duration(hours: 4)),
     latitude: 57.7068,
     longitude: 11.9673,
     organization: 'Stadsmissionen',
@@ -20,11 +22,13 @@ const sampleOpportunities = <Opportunity>[
   ),
   Opportunity(
     id: '2',
+    startsAt: DateTime.now().add(const Duration(days: 1)),
+    endsAt: DateTime.now().add(const Duration(days: 1, hours: 2)),
     latitude: 57.6906,
     longitude: 11.9514,
     organization: 'Slottsskogen vänner',
     title: 'Park clean-up walk',
-    date: 'Sat, 18 May',
+    date: 'Tomorrow',
     time: '10:00–12:00',
     place: 'Slottsskogen',
     distance: '2.8 km',
@@ -36,11 +40,13 @@ const sampleOpportunities = <Opportunity>[
   ),
   Opportunity(
     id: '3',
+    startsAt: DateTime.now().add(const Duration(days: 2)),
+    endsAt: DateTime.now().add(const Duration(days: 2, hours: 2)),
     latitude: 57.6952,
     longitude: 11.9187,
     organization: 'Språkvänner GBG',
     title: 'Practice Swedish over fika',
-    date: 'Sun, 19 May',
+    date: 'In 2 days',
     time: '15:00–16:30',
     place: 'Majorna library',
     distance: '3.4 km',

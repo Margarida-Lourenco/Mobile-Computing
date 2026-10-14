@@ -90,6 +90,9 @@ class FirebaseRepository {
       final profile = await tx.get(profileRef);
       if (!snapshot.exists) throw StateError('This event no longer exists.');
       final event = snapshot.data()!;
+      if (Opportunity.fromFirestore(id, event).hasEnded(DateTime.now())) {
+        throw StateError('This shift has ended. Its participation history is retained.');
+      }
       if (membership.exists && !existing.exists) {
         throw StateError(
             'This older sign-up needs the one-time attendance migration. See UPDATE_SETUP.md.');

@@ -1,23 +1,25 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
+import '../../models/reward_progress.dart';
 import '../app_sheet.dart';
 import '../icon_box.dart';
 import '../small_kicker.dart';
 
 class RewardsSheet extends StatelessWidget {
-  const RewardsSheet({super.key});
+  final RewardProgress rewards;
+  const RewardsSheet({super.key, this.rewards = const RewardProgress()});
 
   @override
   Widget build(BuildContext context) {
     final badges = [
-      ['First Step', 'Completed your first activity', AppIcons.badge, true],
-      ['Helping Hand', 'Shared 3 hours of your time', Icons.favorite, true],
-      ['Team Player', 'Invited a friend to help', Icons.people_outline, false],
+      ['First Step', 'Completed your first activity', AppIcons.badge, rewards.completed >= 1],
+      ['Helping Hand', 'Shared 3 hours of your time', Icons.favorite, rewards.hours >= 3],
+      ['Team Player', 'Completed 3 activities', Icons.people_outline, rewards.completed >= 3],
       [
         'Local Hero',
         'Complete 5 local activities',
         Icons.location_on_outlined,
-        false
+        rewards.completed >= 5
       ],
     ];
 
@@ -33,27 +35,27 @@ class RewardsSheet extends StatelessWidget {
             style: AppTextStyles.sheetTitle,
           ),
           const Text(
-            'Every hour, invitation, and helping hand counts.',
+            'Completed shifts and hours shared earn your next level.',
             style: AppTextStyles.bodyMuted,
           ),
           const SizedBox(height: 20),
-          const Text(
-            'Kind Neighbor',
+          Text(
+            'Level ${rewards.level} · ${rewards.title}',
             style: AppTextStyles.bodyBold,
           ),
           const SizedBox(height: 7),
-          const ClipRRect(
+          ClipRRect(
             borderRadius: BorderRadius.all(Radius.circular(AppRadii.r10)),
             child: LinearProgressIndicator(
-              value: .6,
+              value: rewards.progress,
               minHeight: 7,
               backgroundColor: AppColors.paleBlue,
               valueColor: AlwaysStoppedAnimation(AppColors.darkBlue),
             ),
           ),
           const SizedBox(height: 6),
-          const Text(
-            '3 of 5 activities · 2 more to become a Local Hero',
+          Text(
+            '${rewards.completed} completed shifts · ${rewards.remaining} more until level ${rewards.level + 1}',
             style: AppTextStyles.captionMuted,
           ),
           const SizedBox(height: 22),
