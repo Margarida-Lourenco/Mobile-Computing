@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:typed_data';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart' as http;
 
@@ -12,9 +13,10 @@ class SupabaseImages {
   final http.Client _client;
   final Future<String?> Function(bool) _token;
   final Map<String, ({String url, DateTime expires})> _cache = {};
-  SupabaseImages(
-      {http.Client? client, Future<String?> Function(bool)? tokenProvider})
-      : _client = client ?? http.Client(),
+  SupabaseImages({
+    http.Client? client,
+    Future<String?> Function(bool)? tokenProvider,
+  })  : _client = client ?? http.Client(),
         _token = tokenProvider ?? _firebaseToken;
   static Future<String?> _firebaseToken(bool refresh) async =>
       FirebaseAuth.instance.currentUser?.getIdToken(refresh);
@@ -51,31 +53,39 @@ class SupabaseImages {
         uri.userInfo.isEmpty &&
         !uri.hasPort &&
         value == 'supabase://${uri.host}${uri.path}' &&
-        RegExp(r'^/[A-Za-z0-9_-]{1,128}/[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}\.(jpg|png|webp)$')
-            .hasMatch(uri.path);
+        RegExp(
+          r'^/[A-Za-z0-9_-]{1,128}/[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}\.(jpg|png|webp)$',
+        ).hasMatch(uri.path);
   }
 
-  Future<Map<String, dynamic>> _request(String action, Object body,
-      {Map<String, String> headers = const {}}) async {
+  Future<Map<String, dynamic>> _request(
+    String action,
+    Object body, {
+    Map<String, String> headers = const {},
+    bool allowGuest = false,
+  }) async {
     for (var attempt = 0; attempt < 2; attempt++) {
       final token = await _token(attempt > 0);
-      if (token == null) throw StateError('Sign in before using photos.');
+      if (token == null && !allowGuest) {
+        throw StateError('Sign in before using photos.');
+      }
       final response = await _client
           .post(
             Uri.parse('$projectUrl/functions/v1/photo-api?action=$action'),
             headers: {
               'apikey': publishableKey,
-              'Authorization': 'Bearer $token',
+              if (token != null) 'Authorization': 'Bearer $token',
               'Content-Type': 'application/json',
-              ...headers
+              ...headers,
             },
             body: body,
           )
           .timeout(const Duration(seconds: 60));
-      if (response.statusCode == 401 && attempt == 0) continue;
+      if (response.statusCode == 401 && attempt == 0 && token != null) continue;
       if (response.statusCode == 404) {
         throw StateError(
-            'Photo service is not available yet. Please try again later.');
+          'Photo service is not available yet. Please try again later.',
+        );
       }
       Map<String, dynamic> result;
       try {
@@ -85,7 +95,8 @@ class SupabaseImages {
       }
       if (response.statusCode < 200 || response.statusCode >= 300) {
         throw StateError(
-            result['error'] as String? ?? 'Could not process photo.');
+          result['error'] as String? ?? 'Could not process photo.',
+        );
       }
       return result;
     }
@@ -96,10 +107,11 @@ class SupabaseImages {
     if (!const ['profile-images', 'event-images'].contains(bucket)) {
       throw ArgumentError('Unknown image bucket.');
     }
-    final result = await _request('upload', bytes, headers: {
-      'Content-Type': contentType(bytes),
-      'x-image-bucket': bucket
-    });
+    final result = await _request(
+      'upload',
+      bytes,
+      headers: {'Content-Type': contentType(bytes), 'x-image-bucket': bucket},
+    );
     final reference = result['reference'] as String;
     if (!isReference(reference)) throw StateError('Invalid image response.');
     return reference;
@@ -109,14 +121,16 @@ class SupabaseImages {
     if (!isReference(reference)) {
       throw StateError('This photo needs to be uploaded again.');
     }
-    if (await _token(false) == null) {
+    final guestReadable = Uri.parse(reference).host == 'event-images';
+    if (!guestReadable && await _token(false) == null) {
       throw StateError('Sign in to view photos.');
     }
     final cached = _cache[reference];
     if (cached != null && cached.expires.isAfter(DateTime.now())) {
       return cached.url;
     }
-    final result = await _request('read', jsonEncode({'reference': reference}));
+    final result = await _request('read', jsonEncode({'reference': reference}),
+        allowGuest: guestReadable);
     final url = result['url'] as String;
     final uri = Uri.parse(url);
     if (uri.scheme != 'https' ||
@@ -124,8 +138,10 @@ class SupabaseImages {
         !uri.path.startsWith('/storage/v1/object/sign/')) {
       throw StateError('Invalid photo URL.');
     }
-    _cache[reference] =
-        (url: url, expires: DateTime.now().add(const Duration(minutes: 50)));
+    _cache[reference] = (
+      url: url,
+      expires: DateTime.now().add(const Duration(minutes: 50)),
+    );
     return url;
   }
 

@@ -1,6 +1,8 @@
 import 'dart:typed_data';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+
 import '../models/opportunity.dart';
 import '../models/app_notification.dart';
 import 'member_registry.dart';
@@ -24,13 +26,20 @@ class FirebaseRepository {
   }
 
   Stream<List<Opportunity>> events() =>
-      db.collection('opportunities').snapshots().map((s) => s.docs
-          .where((d) =>
-              (d.data()['cancelled'] != true || d.data()['ownerId'] == uid))
-          .map((d) => Opportunity.fromFirestore(d.id, d.data()))
-          .toList()
-        ..sort((a, b) => (b.startsAt ?? DateTime(2000))
-            .compareTo(a.startsAt ?? DateTime(2000))));
+      db.collection('opportunities').snapshots().map(
+            (s) => s.docs
+                .where(
+                  (d) => (d.data()['cancelled'] != true ||
+                      d.data()['ownerId'] == auth.currentUser?.uid),
+                )
+                .map((d) => Opportunity.fromFirestore(d.id, d.data()))
+                .toList()
+              ..sort(
+                (a, b) => (b.startsAt ?? DateTime(2000)).compareTo(
+                  a.startsAt ?? DateTime(2000),
+                ),
+              ),
+          );
   Future<void> registerMember() => MemberRegistry.registerMember(db, uid);
 
   Stream<int?> memberCount() => db
@@ -38,14 +47,16 @@ class FirebaseRepository {
       .snapshots()
       .map((snapshot) => (snapshot.data()?['accounts'] as num?)?.toInt());
 
-  Stream<ProfileInfo> profile() =>
-      db.doc('users/$uid').snapshots().map((d) => ProfileInfo(
+  Stream<ProfileInfo> profile() => db.doc('users/$uid').snapshots().map(
+        (d) => ProfileInfo(
           username: d.data()?['username'] as String? ?? '',
           name: d.data()?['name'] as String? ??
               auth.currentUser?.email?.split('@').first ??
               'Member',
           location: d.data()?['location'] as String? ?? '',
-          imageUrl: d.data()?['profileImageUrl'] as String?));
+          imageUrl: d.data()?['profileImageUrl'] as String?,
+        ),
+      );
   Stream<Set<String>> membership(String kind) => db
       .collection('users/$uid/$kind')
       .snapshots()
@@ -64,20 +75,27 @@ class FirebaseRepository {
   }
 
   Stream<List<AppNotification>> notifications() =>
-      db.collection('users/$uid/notifications').snapshots().map((s) => s.docs
-          .map((d) => AppNotification.fromFirestore(d.id, d.data()))
-          .toList()
-        ..sort((a, b) => (b.createdAt ?? DateTime(2000))
-            .compareTo(a.createdAt ?? DateTime(2000))));
+      db.collection('users/$uid/notifications').snapshots().map(
+            (s) => s.docs
+                .map((d) => AppNotification.fromFirestore(d.id, d.data()))
+                .toList()
+              ..sort(
+                (a, b) => (b.createdAt ?? DateTime(2000)).compareTo(
+                  a.createdAt ?? DateTime(2000),
+                ),
+              ),
+          );
   Future<void> markNotificationRead(String id) =>
       db.doc('users/$uid/notifications/$id').update({'read': true});
-  Stream<List<Map<String, dynamic>>> attendees(String id) => db
-      .collection('opportunities/$id/attendees')
-      .snapshots()
-      .map((s) => s.docs.map((d) => {'uid': d.id, ...d.data()}).toList()
-        ..sort((a, b) => (a['username'] as String)
-            .toLowerCase()
-            .compareTo((b['username'] as String).toLowerCase())));
+  Stream<List<Map<String, dynamic>>> attendees(String id) =>
+      db.collection('opportunities/$id/attendees').snapshots().map(
+            (s) => s.docs.map((d) => {'uid': d.id, ...d.data()}).toList()
+              ..sort(
+                (a, b) => (a['username'] as String).toLowerCase().compareTo(
+                      (b['username'] as String).toLowerCase(),
+                    ),
+              ),
+          );
   Future<void> setAttendance(String id, bool joining) async {
     final actor = uid;
     final eventRef = db.doc('opportunities/$id');
@@ -93,19 +111,22 @@ class FirebaseRepository {
       final event = snapshot.data()!;
       if (Opportunity.fromFirestore(id, event).hasEnded(DateTime.now())) {
         throw StateError(
-            'This shift has ended. Its participation history is retained.');
+          'This shift has ended. Its participation history is retained.',
+        );
       }
       if (membership.exists && !existing.exists) {
         throw StateError(
-            'This older sign-up needs the one-time attendance migration. See UPDATE_SETUP.md.');
+          'This older sign-up needs the one-time attendance migration. See UPDATE_SETUP.md.',
+        );
       }
       final change = AttendanceChange.calculate(
-          capacity: (event['spots'] as num).toInt(),
-          count: (event['attendeeCount'] as num?)?.toInt() ?? 0,
-          revision: (event['attendanceRevision'] as num?)?.toInt() ?? 0,
-          alreadyJoined: existing.exists,
-          joining: joining,
-          cancelled: event['cancelled'] == true);
+        capacity: (event['spots'] as num).toInt(),
+        count: (event['attendeeCount'] as num?)?.toInt() ?? 0,
+        revision: (event['attendanceRevision'] as num?)?.toInt() ?? 0,
+        alreadyJoined: existing.exists,
+        joining: joining,
+        cancelled: event['cancelled'] == true,
+      );
       if (!change.changed) return;
       final name = profile.data()?['username'] as String? ??
           profile.data()?['name'] as String? ??
@@ -116,11 +137,13 @@ class FirebaseRepository {
         'attendanceRevision': change.revision,
         'lastActorId': actor,
         'lastAction': joining ? 'joined' : 'left',
-        'updatedAt': FieldValue.serverTimestamp()
+        'updatedAt': FieldValue.serverTimestamp(),
       });
       if (joining) {
-        tx.set(attendeeRef,
-            {'username': name, 'joinedAt': FieldValue.serverTimestamp()});
+        tx.set(attendeeRef, {
+          'username': name,
+          'joinedAt': FieldValue.serverTimestamp(),
+        });
         tx.set(membershipRef, {'createdAt': FieldValue.serverTimestamp()});
       } else {
         tx.delete(attendeeRef);
@@ -134,13 +157,17 @@ class FirebaseRepository {
             'actorName': name,
             'kind': kind,
             'revision': change.revision,
-            'createdAt': FieldValue.serverTimestamp()
+            'createdAt': FieldValue.serverTimestamp(),
           };
-      tx.set(db.doc('users/$actor/notifications/$noticeId'),
-          notice(joining ? 'joined' : 'left'));
+      tx.set(
+        db.doc('users/$actor/notifications/$noticeId'),
+        notice(joining ? 'joined' : 'left'),
+      );
       if (owner != actor) {
-        tx.set(db.doc('users/$owner/notifications/$noticeId'),
-            notice(joining ? 'signup' : 'withdrawal'));
+        tx.set(
+          db.doc('users/$owner/notifications/$noticeId'),
+          notice(joining ? 'signup' : 'withdrawal'),
+        );
       }
     });
   }
@@ -159,8 +186,10 @@ class FirebaseRepository {
     String? savedReference;
     try {
       if (info.selectedImage != null) {
-        uploaded = await SupabaseImages.instance
-            .upload('profile-images', info.selectedImage!);
+        uploaded = await SupabaseImages.instance.upload(
+          'profile-images',
+          info.selectedImage!,
+        );
       }
       final ref = db.doc('users/$uid');
       await db.runTransaction((tx) async {
@@ -172,7 +201,7 @@ class FirebaseRepository {
             {
               'name': info.name,
               'location': info.location,
-              'profileImageUrl': savedReference
+              'profileImageUrl': savedReference,
             },
             SetOptions(merge: true));
       });
@@ -183,8 +212,11 @@ class FirebaseRepository {
     if (oldReference != savedReference) await _cleanupPhoto(oldReference);
   }
 
-  Future<void> saveEvent(Opportunity event,
-      {Uint8List? photo, bool update = false}) async {
+  Future<void> saveEvent(
+    Opportunity event, {
+    Uint8List? photo,
+    bool update = false,
+  }) async {
     if (event.startsAt == null ||
         event.endsAt == null ||
         !event.endsAt!.isAfter(event.startsAt!)) {
@@ -213,7 +245,8 @@ class FirebaseRepository {
         final count = (previous?['attendeeCount'] as num?)?.toInt() ?? 0;
         if (event.spots < count) {
           throw StateError(
-              'There are already $count volunteers. Capacity cannot be lower than that.');
+            'There are already $count volunteers. Capacity cannot be lower than that.',
+          );
         }
         previousPhoto = previous?['coverImageUrl'] as String?;
         savedPhoto =
@@ -234,7 +267,7 @@ class FirebaseRepository {
             ...data,
             'attendeeCount': 0,
             'attendanceRevision': 0,
-            'cancelled': false
+            'cancelled': false,
           });
         }
       });
@@ -255,8 +288,10 @@ class FirebaseRepository {
       if (snapshot.data()?['ownerId'] != uid) {
         throw StateError('Only the host can cancel this event.');
       }
-      tx.update(eventRef,
-          {'cancelled': true, 'updatedAt': FieldValue.serverTimestamp()});
+      tx.update(eventRef, {
+        'cancelled': true,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
       return snapshot.data()!['title'] as String;
     });
     // The event stays as an audit record; it is removed from Discover, Map and commitments.
@@ -265,17 +300,18 @@ class FirebaseRepository {
       final batch = db.batch();
       for (final member in members.docs.skip(offset).take(400)) {
         batch.set(
-            db.doc('users/${member.id}/notifications/${event.id}_cancelled'),
-            {
-              'eventId': event.id,
-              'title': cancelledTitle,
-              'actorId': uid,
-              'actorName': auth.currentUser?.displayName ?? 'Host',
-              'kind': 'cancelled',
-              'revision': 0,
-              'createdAt': FieldValue.serverTimestamp()
-            },
-            SetOptions(merge: true));
+          db.doc('users/${member.id}/notifications/${event.id}_cancelled'),
+          {
+            'eventId': event.id,
+            'title': cancelledTitle,
+            'actorId': uid,
+            'actorName': auth.currentUser?.displayName ?? 'Host',
+            'kind': 'cancelled',
+            'revision': 0,
+            'createdAt': FieldValue.serverTimestamp(),
+          },
+          SetOptions(merge: true),
+        );
       }
       await batch.commit();
     }

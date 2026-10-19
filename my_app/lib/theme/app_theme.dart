@@ -98,74 +98,113 @@ BoxDecoration appCardDecoration() {
 
 class AppTextStyles {
   static const calendarSelected = TextStyle(
-      fontSize: AppFonts.caption,
-      color: AppColors.white,
-      fontWeight: AppFonts.bold);
-  static const formError =
-      TextStyle(color: AppColors.error, fontSize: AppFonts.body);
-  static const brandTitle =
-      TextStyle(fontSize: AppFonts.brand, fontWeight: AppFonts.bold);
+    fontSize: AppFonts.caption,
+    color: AppColors.white,
+    fontWeight: AppFonts.bold,
+  );
+  static const formError = TextStyle(
+    color: AppColors.error,
+    fontSize: AppFonts.body,
+  );
+  static const brandTitle = TextStyle(
+    fontSize: AppFonts.brand,
+    fontWeight: AppFonts.bold,
+  );
   static const captionAccentBold = TextStyle(
-      fontSize: AppFonts.caption,
-      fontWeight: AppFonts.bold,
-      color: AppColors.darkBlue);
+    fontSize: AppFonts.caption,
+    fontWeight: AppFonts.bold,
+    color: AppColors.darkBlue,
+  );
   static const heroTitle = TextStyle(
-      fontSize: AppFonts.hero,
-      fontWeight: AppFonts.heavy,
-      color: AppColors.navy);
-  static const captionMuted =
-      TextStyle(fontSize: AppFonts.caption, color: AppColors.muted);
-  static const actionLabel =
-      TextStyle(fontWeight: AppFonts.bold, color: AppColors.navy);
-  static const captionBold =
-      TextStyle(fontSize: AppFonts.caption, fontWeight: AppFonts.bold);
-  static const pageTitle =
-      TextStyle(fontSize: AppFonts.page, fontWeight: AppFonts.bold);
+    fontSize: AppFonts.hero,
+    fontWeight: AppFonts.heavy,
+    color: AppColors.navy,
+  );
+  static const captionMuted = TextStyle(
+    fontSize: AppFonts.caption,
+    color: AppColors.muted,
+  );
+  static const actionLabel = TextStyle(
+    fontWeight: AppFonts.bold,
+    color: AppColors.navy,
+  );
+  static const captionBold = TextStyle(
+    fontSize: AppFonts.caption,
+    fontWeight: AppFonts.bold,
+  );
+  static const pageTitle = TextStyle(
+    fontSize: AppFonts.page,
+    fontWeight: AppFonts.bold,
+  );
   static const bodyMuted = TextStyle(color: AppColors.muted);
-  static const captionNavy =
-      TextStyle(fontSize: AppFonts.caption, color: AppColors.navy);
-  static const avatarInitials =
-      TextStyle(color: AppColors.navy, fontWeight: AppFonts.heavy);
-  static const profileTitle =
-      TextStyle(fontSize: AppFonts.subtitle, fontWeight: AppFonts.heavy);
+  static const captionNavy = TextStyle(
+    fontSize: AppFonts.caption,
+    color: AppColors.navy,
+  );
+  static const avatarInitials = TextStyle(
+    color: AppColors.navy,
+    fontWeight: AppFonts.heavy,
+  );
+  static const profileTitle = TextStyle(
+    fontSize: AppFonts.subtitle,
+    fontWeight: AppFonts.heavy,
+  );
 
   static const bodyBold = TextStyle(fontWeight: AppFonts.bold);
-  static const calendarDay =
-      TextStyle(fontSize: AppFonts.bodyLarge, fontWeight: AppFonts.heavy);
-  static const statValue =
-      TextStyle(fontSize: AppFonts.section, fontWeight: AppFonts.heavy);
+  static const calendarDay = TextStyle(
+    fontSize: AppFonts.bodyLarge,
+    fontWeight: AppFonts.heavy,
+  );
+  static const statValue = TextStyle(
+    fontSize: AppFonts.section,
+    fontWeight: AppFonts.heavy,
+  );
 
-  static const greeting =
-      TextStyle(fontSize: AppFonts.header, fontWeight: AppFonts.heavy);
+  static const greeting = TextStyle(
+    fontSize: AppFonts.header,
+    fontWeight: AppFonts.heavy,
+  );
   static const cardKicker = TextStyle(
-      fontSize: AppFonts.caption,
-      color: AppColors.muted,
-      fontWeight: AppFonts.bold,
-      letterSpacing: .4);
-  static const cardTitle =
-      TextStyle(fontSize: AppFonts.body, fontWeight: AppFonts.bold);
+    fontSize: AppFonts.caption,
+    color: AppColors.muted,
+    fontWeight: AppFonts.bold,
+    letterSpacing: .4,
+  );
+  static const cardTitle = TextStyle(
+    fontSize: AppFonts.body,
+    fontWeight: AppFonts.bold,
+  );
   static const sectionKicker = TextStyle(
-      fontSize: AppFonts.caption,
-      color: AppColors.darkBlue,
-      fontWeight: AppFonts.bold,
-      letterSpacing: 1.2);
+    fontSize: AppFonts.caption,
+    color: AppColors.darkBlue,
+    fontWeight: AppFonts.bold,
+    letterSpacing: 1.2,
+  );
   static const smallKicker = TextStyle(
-      fontSize: AppFonts.caption,
-      color: AppColors.darkBlue,
-      fontWeight: AppFonts.heavy,
-      letterSpacing: 1.1);
-  static const sheetTitle =
-      TextStyle(fontSize: AppFonts.sheet, fontWeight: AppFonts.bold);
+    fontSize: AppFonts.caption,
+    color: AppColors.darkBlue,
+    fontWeight: AppFonts.heavy,
+    letterSpacing: 1.1,
+  );
+  static const sheetTitle = TextStyle(
+    fontSize: AppFonts.sheet,
+    fontWeight: AppFonts.bold,
+  );
   static const caption = TextStyle(fontSize: AppFonts.caption);
-  static const compactSheetTitle =
-      TextStyle(fontSize: AppFonts.header, fontWeight: AppFonts.bold);
+  static const compactSheetTitle = TextStyle(
+    fontSize: AppFonts.header,
+    fontWeight: AppFonts.bold,
+  );
   static const bodyMedium = TextStyle(fontWeight: AppFonts.medium);
   static const captionMutedBold = TextStyle(
-      fontSize: AppFonts.caption,
-      color: AppColors.muted,
-      fontWeight: AppFonts.bold);
-  static const eventTitle =
-      TextStyle(fontSize: AppFonts.sheet, fontWeight: AppFonts.heavy);
+    fontSize: AppFonts.caption,
+    color: AppColors.muted,
+    fontWeight: AppFonts.bold,
+  );
+  static const eventTitle = TextStyle(
+    fontSize: AppFonts.sheet,
+    fontWeight: AppFonts.heavy,
+  );
   static const description = TextStyle(color: AppColors.muted, height: 1.45);
 }
 

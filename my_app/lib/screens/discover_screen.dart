@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../models/opportunity.dart';
 import '../models/reward_progress.dart';
 import '../models/community_impact.dart';
@@ -14,6 +15,7 @@ class DiscoverScreen extends StatelessWidget {
   final List<Opportunity> opportunities;
   final Set<String> favorites;
   final String category;
+  final Set<String>? categories;
   final TextEditingController searchController;
   final ValueChanged<String> onSearch;
   final ValueChanged<String> onCategory;
@@ -29,7 +31,8 @@ class DiscoverScreen extends StatelessWidget {
     super.key,
     required this.opportunities,
     required this.favorites,
-    required this.category,
+    this.category = 'All',
+    this.categories,
     required this.searchController,
     required this.onSearch,
     required this.onCategory,
@@ -48,7 +51,10 @@ class DiscoverScreen extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SearchBox(controller: searchController, onChanged: onSearch),
-        CategoryChips(selected: category, onSelected: onCategory),
+        CategoryChips(
+          selected: categories ?? {category},
+          onSelected: onCategory,
+        ),
         const SizedBox(height: 18),
         _impactCard(),
         const SizedBox(height: 11),
@@ -69,9 +75,7 @@ class DiscoverScreen extends StatelessWidget {
           ),
         ),
         if (opportunities.isEmpty)
-          const EmptyState(
-            text: 'No opportunities in this category yet.',
-          ),
+          const EmptyState(text: 'No opportunities in this category yet.'),
       ],
     );
   }
@@ -118,10 +122,11 @@ class DiscoverScreen extends StatelessWidget {
                     ),
                     const SizedBox(width: 5),
                     Flexible(
-                        child: Text(
-                      '${communityImpact?.month ?? 'THIS MONTH'} · IMPACT',
-                      style: AppTextStyles.captionAccentBold,
-                    )),
+                      child: Text(
+                        '${communityImpact?.month ?? 'THIS MONTH'} · IMPACT',
+                        style: AppTextStyles.captionAccentBold,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -206,8 +211,9 @@ class DiscoverScreen extends StatelessWidget {
                     value: rewards.progress,
                     minHeight: 4,
                     backgroundColor: AppColors.progressTrack,
-                    valueColor:
-                        const AlwaysStoppedAnimation(AppColors.darkBlue),
+                    valueColor: const AlwaysStoppedAnimation(
+                      AppColors.darkBlue,
+                    ),
                   ),
                   const SizedBox(height: 3),
                   Text(

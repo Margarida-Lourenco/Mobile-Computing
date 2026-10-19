@@ -1,3 +1,15 @@
+# Web layout correction
+
+Read [WEB_LAYOUT_FIXES.md](WEB_LAYOUT_FIXES.md) for the latest fixes and rebuild instructions. This version retains guest listing photos and all earlier features.
+
+# Guest listing-photo update
+
+See [GUEST_PHOTOS.md](GUEST_PHOTOS.md). The Supabase backend change is already deployed; rebuild the app from this ZIP to enable guest image requests.
+
+# Latest update
+
+See [CHANGES_2026-10-19.md](CHANGES_2026-10-19.md) for this delivery, verification, demo-data details, and run instructions. The Firebase rules and 35 demo accounts are already deployed. Earlier setup/change notes below describe previous versions.
+
 > Current update: profile/event photos now use Supabase private storage. Follow [SUPABASE_SETUP.md](SUPABASE_SETUP.md) for the required one-time deployment. Firebase remains on Spark. Older statements below about removed uploads are superseded.
 
 > This is the Spark edition. Follow [SPARK_SETUP.md](SPARK_SETUP.md) for current setup and validation. Any photo-upload, Storage or Functions instructions below describe older versions.

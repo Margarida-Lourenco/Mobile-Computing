@@ -55,3 +55,9 @@ export async function readLimited(request, limit = MAX_BYTES) {
   for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.length; }
   return bytes;
 }
+
+// Event photos accompany public listings. Profile photos and all mutations
+// continue to require a verified Firebase identity.
+export function isGuestReadablePhoto(action, reference) {
+  return action === 'read' && parseReference(reference).bucket === 'event-images';
+}

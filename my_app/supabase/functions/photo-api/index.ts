@@ -1,7 +1,7 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { createRemoteJWKSet, jwtVerify } from 'npm:jose@6';
 import { BUCKETS, RequestError, parseReference, requireOwner, requireFirebaseClaims,
-  validateImage, readLimited } from './security.mjs';
+  validateImage, readLimited, isGuestReadablePhoto } from './security.mjs';
 
 const firebaseProject = Deno.env.get('FIREBASE_PROJECT_ID') ?? 'cls055-26-project';
 const keys = createRemoteJWKSet(new URL(
@@ -18,19 +18,33 @@ Deno.serve(async (request: Request) => {
   if (request.method === 'OPTIONS') return new Response(null, {status: 204, headers: cors});
   if (request.method !== 'POST') return json({error: 'Use POST.'}, 405);
   try {
-    const token = /^Bearer (.+)$/.exec(request.headers.get('authorization') ?? '')?.[1];
-    if (!token) throw new RequestError(401, 'Please sign in first.');
-    let uid: string;
-    try {
-      const {payload} = await jwtVerify(token, keys, {
-        issuer: `https://securetoken.google.com/${firebaseProject}`,
-        audience: firebaseProject,
-        algorithms: ['RS256'],
-        requiredClaims: ['exp', 'iat', 'sub', 'auth_time', 'aud', 'iss'],
-        clockTolerance: 5,
-      });
-      uid = requireFirebaseClaims(payload);
-    } catch { throw new RequestError(401, 'Please sign in again.'); }
+    const action = new URL(request.url).searchParams.get('action');
+    if (!['upload', 'read', 'delete'].includes(action ?? '')) throw new RequestError(400, 'Unknown action.');
+    let photo: {bucket: string; path: string} | undefined;
+    let guestReadable = false;
+    if (action !== 'upload') {
+      const bytes = await readLimited(request, 4096);
+      let body;
+      try { body = JSON.parse(new TextDecoder().decode(bytes)); }
+      catch { throw new RequestError(400, 'Invalid request.'); }
+      photo = parseReference(body?.reference);
+      guestReadable = isGuestReadablePhoto(action, body?.reference);
+    }
+    let uid = '';
+    if (!guestReadable) {
+      const token = /^Bearer (.+)$/.exec(request.headers.get('authorization') ?? '')?.[1];
+      if (!token) throw new RequestError(401, 'Please sign in first.');
+      try {
+        const {payload} = await jwtVerify(token, keys, {
+          issuer: `https://securetoken.google.com/${firebaseProject}`,
+          audience: firebaseProject,
+          algorithms: ['RS256'],
+          requiredClaims: ['exp', 'iat', 'sub', 'auth_time', 'aud', 'iss'],
+          clockTolerance: 5,
+        });
+        uid = requireFirebaseClaims(payload);
+      } catch { throw new RequestError(401, 'Please sign in again.'); }
+    }
 
     // These keys remain inside the Supabase function and are never returned.
     const secretKeys = JSON.parse(Deno.env.get('SUPABASE_SECRET_KEYS') ?? '{}');
@@ -40,7 +54,6 @@ Deno.serve(async (request: Request) => {
     const storage = createClient(url, secret, {
       auth: {persistSession: false, autoRefreshToken: false},
     }).storage;
-    const action = new URL(request.url).searchParams.get('action');
     if (action === 'upload') {
       const bucket = request.headers.get('x-image-bucket') ?? '';
       if (!BUCKETS.has(bucket)) throw new RequestError(400, 'Invalid image bucket.');
@@ -54,19 +67,15 @@ Deno.serve(async (request: Request) => {
       if (error) { console.error('Storage upload failed:', error.message); throw new RequestError(502, 'Could not upload photo. Please try again.'); }
       return json({reference: `supabase://${bucket}/${path}`});
     }
-    if (action !== 'read' && action !== 'delete') throw new RequestError(400, 'Unknown action.');
-    const bytes = await readLimited(request, 4096);
-    let body;
-    try { body = JSON.parse(new TextDecoder().decode(bytes)); }
-    catch { throw new RequestError(400, 'Invalid request.'); }
-    const {bucket, path} = parseReference(body?.reference);
+    const {bucket, path} = photo!;
     if (action === 'delete') {
       requireOwner(path, uid);
       const {error} = await storage.from(bucket).remove([path]);
       if (error) throw new RequestError(502, 'Could not remove photo.');
       return json({ok: true});
     }
-    // Photos are visible to signed-in members, but the buckets remain private.
+    // Event-photo reads are public; profile-photo reads require Firebase auth.
+    // Both storage buckets stay private; only expiring signed URLs are returned.
     const {data, error} = await storage.from(bucket).createSignedUrl(path, 3600);
     if (error) throw new RequestError(404, 'Photo is unavailable.');
     return json({url: data.signedUrl});

@@ -1,5 +1,7 @@
 import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
+
 import '../theme/app_theme.dart';
 import '../widgets/photo_editor.dart';
 
@@ -11,13 +13,14 @@ class ProfileInfo {
   final Uint8List? selectedImage;
   final bool removeImage;
 
-  const ProfileInfo(
-      {this.username = '',
-      required this.name,
-      required this.location,
-      this.imageUrl,
-      this.selectedImage,
-      this.removeImage = false});
+  const ProfileInfo({
+    this.username = '',
+    required this.name,
+    required this.location,
+    this.imageUrl,
+    this.selectedImage,
+    this.removeImage = false,
+  });
 
   String get displayUsername => username.isEmpty ? name : username;
   String get firstName =>
@@ -50,12 +53,13 @@ class _EditInfoScreenState extends State<EditInfoScreen> {
     if (!formKey.currentState!.validate()) return;
     setState(() => busy = true);
     final info = ProfileInfo(
-        username: widget.profile.username,
-        name: name.text.trim(),
-        location: location.text.trim(),
-        imageUrl: widget.profile.imageUrl,
-        selectedImage: photo,
-        removeImage: removePhoto);
+      username: widget.profile.username,
+      name: name.text.trim(),
+      location: location.text.trim(),
+      imageUrl: widget.profile.imageUrl,
+      selectedImage: photo,
+      removeImage: removePhoto,
+    );
     try {
       await widget.onSave?.call(info);
       if (mounted) {
@@ -90,62 +94,65 @@ class _EditInfoScreenState extends State<EditInfoScreen> {
   @override
   Widget build(BuildContext context) {
     return PopScope(
-        canPop: !busy,
-        child: Scaffold(
-          appBar: AppBar(title: const Text('Edit info')),
-          body: SafeArea(
-            child: Form(
-              key: formKey,
-              child: ListView(
-                padding: const EdgeInsets.all(AppSpacing.s20),
-                children: [
-                  const Text('Your profile', style: AppTextStyles.pageTitle),
-                  const SizedBox(height: 8),
-                  const Text(
-                      'Update the details shown on My Page and in your greeting.',
-                      style: AppTextStyles.bodyMuted),
-                  const SizedBox(height: 24),
-                  PhotoEditor(
-                      label: 'Choose profile picture',
-                      busy: busy,
-                      reference: removePhoto ? null : widget.profile.imageUrl,
-                      selected: photo,
-                      onSelected: (bytes) => setState(() {
-                            photo = bytes;
-                            removePhoto = false;
-                          }),
-                      onRemove: () => setState(() {
-                            photo = null;
-                            removePhoto = true;
-                          })),
-                  if (error != null) Text(error!),
-                  TextFormField(
-                    controller: name,
-                    textCapitalization: TextCapitalization.words,
-                    textInputAction: TextInputAction.next,
-                    decoration: const InputDecoration(labelText: 'Name'),
-                    validator: (value) => value == null || value.trim().isEmpty
-                        ? 'Enter your name'
-                        : null,
-                  ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: location,
-                    textCapitalization: TextCapitalization.words,
-                    decoration: const InputDecoration(labelText: 'Location'),
-                    validator: (value) => value == null || value.trim().isEmpty
-                        ? 'Enter your location'
-                        : null,
-                  ),
-                  const SizedBox(height: 24),
-                  FilledButton(
-                    onPressed: busy ? null : save,
-                    child: const Text('Save changes'),
-                  ),
-                ],
-              ),
+      canPop: !busy,
+      child: Scaffold(
+        appBar: AppBar(title: const Text('Edit info')),
+        body: SafeArea(
+          child: Form(
+            key: formKey,
+            child: ListView(
+              padding: const EdgeInsets.all(AppSpacing.s20),
+              children: [
+                const Text('Your profile', style: AppTextStyles.pageTitle),
+                const SizedBox(height: 8),
+                const Text(
+                  'Update the details shown on My Page and in your greeting.',
+                  style: AppTextStyles.bodyMuted,
+                ),
+                const SizedBox(height: 24),
+                PhotoEditor(
+                  label: 'Choose profile picture',
+                  busy: busy,
+                  reference: removePhoto ? null : widget.profile.imageUrl,
+                  selected: photo,
+                  onSelected: (bytes) => setState(() {
+                    photo = bytes;
+                    removePhoto = false;
+                  }),
+                  onRemove: () => setState(() {
+                    photo = null;
+                    removePhoto = true;
+                  }),
+                ),
+                if (error != null) Text(error!),
+                TextFormField(
+                  controller: name,
+                  textCapitalization: TextCapitalization.words,
+                  textInputAction: TextInputAction.next,
+                  decoration: const InputDecoration(labelText: 'Name'),
+                  validator: (value) => value == null || value.trim().isEmpty
+                      ? 'Enter your name'
+                      : null,
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: location,
+                  textCapitalization: TextCapitalization.words,
+                  decoration: const InputDecoration(labelText: 'Location'),
+                  validator: (value) => value == null || value.trim().isEmpty
+                      ? 'Enter your location'
+                      : null,
+                ),
+                const SizedBox(height: 24),
+                FilledButton(
+                  onPressed: busy ? null : save,
+                  child: const Text('Save changes'),
+                ),
+              ],
             ),
           ),
-        ));
+        ),
+      ),
+    );
   }
 }

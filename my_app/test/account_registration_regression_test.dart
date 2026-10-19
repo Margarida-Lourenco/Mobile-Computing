@@ -31,8 +31,10 @@ class _Credential extends Fake implements UserCredential {
 class _Auth extends Fake implements FirebaseAuth {
   final member = _User();
   @override
-  Future<UserCredential> createUserWithEmailAndPassword(
-          {required String email, required String password}) async =>
+  Future<UserCredential> createUserWithEmailAndPassword({
+    required String email,
+    required String password,
+  }) async =>
       _Credential(member);
 }
 
@@ -57,7 +59,8 @@ class _Transaction extends Fake implements Transaction {
   _Transaction(this.store);
   @override
   Future<DocumentSnapshot<T>> get<T extends Object?>(
-          DocumentReference<T> ref) async =>
+    DocumentReference<T> ref,
+  ) async =>
       _Snapshot<T>(store.profile != null);
   @override
   Transaction set<T>(DocumentReference<T> ref, T data, [SetOptions? options]) {
@@ -76,46 +79,74 @@ class _Store extends Fake implements FirebaseFirestore {
     paths.add(path);
     if (denyProfiles || !path.startsWith('users/')) {
       throw FirebaseException(
-          plugin: 'cloud_firestore', code: 'permission-denied');
+        plugin: 'cloud_firestore',
+        code: 'permission-denied',
+      );
     }
     return _Reference(path);
   }
 
   @override
-  Future<T> runTransaction<T>(TransactionHandler<T> handler,
-          {Duration timeout = const Duration(seconds: 30),
-          int maxAttempts = 5}) =>
+  Future<T> runTransaction<T>(
+    TransactionHandler<T> handler, {
+    Duration timeout = const Duration(seconds: 30),
+    int maxAttempts = 5,
+  }) =>
       handler(_Transaction(this));
 }
 
 void main() {
-  test('new account succeeds even when member-counter access is denied',
-      () async {
-    final auth = _Auth();
-    final store = _Store();
-    await AccountRegistration.create(
-        'member@example.com', 'password123', 'new_member',
-        authentication: auth, database: store);
-    expect(store.profile?['username'], 'new_member');
-    expect(auth.member.deleted, isFalse);
-    expect(AccountRegistration.inProgress.value, isFalse);
-    expect(store.paths, ['users/new-member']);
-    await expectLater(
+  test(
+    'new account succeeds even when member-counter access is denied',
+    () async {
+      final auth = _Auth();
+      final store = _Store();
+      await AccountRegistration.create(
+        'member@example.com',
+        'password123',
+        'new_member',
+        authentication: auth,
+        database: store,
+      );
+      expect(store.profile?['username'], 'new_member');
+      expect(auth.member.deleted, isFalse);
+      expect(AccountRegistration.inProgress.value, isFalse);
+      expect(store.paths, ['users/new-member']);
+      await expectLater(
         MemberRegistry.registerMember(store, auth.member.uid),
-        throwsA(isA<FirebaseException>()
-            .having((e) => e.code, 'code', 'permission-denied')));
-    expect(auth.member.deleted, isFalse);
-  });
-  test('profile setup failure still rolls back the unfinished account',
-      () async {
-    final auth = _Auth();
-    await expectLater(
+        throwsA(
+          isA<FirebaseException>().having(
+            (e) => e.code,
+            'code',
+            'permission-denied',
+          ),
+        ),
+      );
+      expect(auth.member.deleted, isFalse);
+    },
+  );
+  test(
+    'profile setup failure still rolls back the unfinished account',
+    () async {
+      final auth = _Auth();
+      await expectLater(
         AccountRegistration.create(
-            'member@example.com', 'password123', 'new_member',
-            authentication: auth, database: _Store(denyProfiles: true)),
-        throwsA(isA<FirebaseException>()
-            .having((e) => e.code, 'code', 'permission-denied')));
-    expect(auth.member.deleted, isTrue);
-    expect(AccountRegistration.inProgress.value, isFalse);
-  });
+          'member@example.com',
+          'password123',
+          'new_member',
+          authentication: auth,
+          database: _Store(denyProfiles: true),
+        ),
+        throwsA(
+          isA<FirebaseException>().having(
+            (e) => e.code,
+            'code',
+            'permission-denied',
+          ),
+        ),
+      );
+      expect(auth.member.deleted, isTrue);
+      expect(AccountRegistration.inProgress.value, isFalse);
+    },
+  );
 }

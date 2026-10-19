@@ -8,11 +8,19 @@ class RewardProgress {
   const RewardProgress({this.completed = 0, this.hours = 0});
 
   factory RewardProgress.fromShifts(
-      Iterable<Opportunity> events, Set<String> joined, DateTime now) {
+    Iterable<Opportunity> events,
+    Set<String> joined,
+    DateTime now,
+  ) {
     final shifts = events.where(
-        (e) => joined.contains(e.id) && !e.cancelled &&
-            e.startsAt != null && e.endsAt != null &&
-            e.endsAt!.isAfter(e.startsAt!) && !e.endsAt!.isAfter(now));
+      (e) =>
+          joined.contains(e.id) &&
+          !e.cancelled &&
+          e.startsAt != null &&
+          e.endsAt != null &&
+          e.endsAt!.isAfter(e.startsAt!) &&
+          !e.endsAt!.isAfter(now),
+    );
     var hours = 0.0;
     for (final shift in shifts) {
       if (shift.startsAt != null && shift.endsAt != null) {
@@ -23,10 +31,33 @@ class RewardProgress {
     return RewardProgress(completed: shifts.length, hours: hours);
   }
 
-  int get level => completed == 0 ? 1 : completed < 3 ? 2 : completed < 5 ? 3 : 3 + completed ~/ 5;
-  String get title => level == 1 ? 'New Neighbor' : level == 2 ? 'Kind Neighbor' : level == 3 ? 'Helping Neighbor' : 'Local Hero';
-  int get nextTarget => completed == 0 ? 1 : completed < 3 ? 3 : completed < 5 ? 5 : (completed ~/ 5 + 1) * 5;
+  int get level => completed == 0
+      ? 1
+      : completed < 3
+          ? 2
+          : completed < 5
+              ? 3
+              : 3 + completed ~/ 5;
+  String get title => level == 1
+      ? 'New Neighbor'
+      : level == 2
+          ? 'Kind Neighbor'
+          : level == 3
+              ? 'Helping Neighbor'
+              : 'Local Hero';
+  int get nextTarget => completed == 0
+      ? 1
+      : completed < 3
+          ? 3
+          : completed < 5
+              ? 5
+              : (completed ~/ 5 + 1) * 5;
   int get remaining => nextTarget - completed;
   double get progress => completed / nextTarget;
-  int get badgesEarned => [completed >= 1, hours >= 3, completed >= 3, completed >= 5].where((earned) => earned).length;
+  int get badgesEarned => [
+        completed >= 1,
+        hours >= 3,
+        completed >= 3,
+        completed >= 5,
+      ].where((earned) => earned).length;
 }

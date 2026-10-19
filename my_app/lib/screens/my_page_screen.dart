@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../models/opportunity.dart';
 import '../models/reward_progress.dart';
 import '../theme/app_theme.dart';
@@ -50,8 +51,11 @@ class _MyPageScreenState extends State<MyPageScreen> {
   @override
   Widget build(BuildContext context) {
     final now = DateTime.now();
-    final rewards =
-        RewardProgress.fromShifts(widget.opportunities, widget.joined, now);
+    final rewards = RewardProgress.fromShifts(
+      widget.opportunities,
+      widget.joined,
+      now,
+    );
     final allJoined = widget.opportunities
         .where((o) => widget.joined.contains(o.id) && !o.cancelled)
         .toList();
@@ -69,9 +73,11 @@ class _MyPageScreenState extends State<MyPageScreen> {
         ? pastItems
         : calendar
             ? joinedItems
-                .where((e) =>
-                    e.startsAt != null &&
-                    DateUtils.isSameDay(e.startsAt, selectedDate))
+                .where(
+                  (e) =>
+                      e.startsAt != null &&
+                      DateUtils.isSameDay(e.startsAt, selectedDate),
+                )
                 .toList()
             : joinedItems;
     return Column(
@@ -84,15 +90,21 @@ class _MyPageScreenState extends State<MyPageScreen> {
               radius: 30,
               backgroundColor: AppColors.paleGreen,
               child: widget.profile.imageUrl == null
-                  ? Text(widget.profile.initials,
-                      style: AppTextStyles.avatarInitials)
+                  ? Text(
+                      widget.profile.initials,
+                      style: AppTextStyles.avatarInitials,
+                    )
                   : ClipOval(
                       child: EventPhoto(
-                          reference: widget.profile.imageUrl!,
-                          width: 60,
-                          height: 60,
-                          fallback: Text(widget.profile.initials,
-                              style: AppTextStyles.avatarInitials))),
+                        reference: widget.profile.imageUrl!,
+                        width: 60,
+                        height: 60,
+                        fallback: Text(
+                          widget.profile.initials,
+                          style: AppTextStyles.avatarInitials,
+                        ),
+                      ),
+                    ),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -115,7 +127,9 @@ class _MyPageScreenState extends State<MyPageScreen> {
               ),
             ),
             TextButton(
-                onPressed: widget.onEditInfo, child: const Text('Edit info')),
+              onPressed: widget.onEditInfo,
+              child: const Text('Edit info'),
+            ),
           ],
         ),
         const SizedBox(height: 15),
@@ -156,67 +170,84 @@ class _MyPageScreenState extends State<MyPageScreen> {
           ),
         ),
         const SizedBox(height: 26),
-        const SectionTitle(
-          kicker: 'YOUR COMMITMENTS',
-          title: 'Your activity',
-        ),
+        const SectionTitle(kicker: 'YOUR COMMITMENTS', title: 'Your activity'),
         const SizedBox(height: 12),
         LayoutBuilder(
-            builder: (context, constraints) => Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: ['My shifts', 'Posted', 'Favorites']
-                    .map((tab) => SizedBox(
-                        width: constraints.maxWidth < 300
-                            ? constraints.maxWidth
-                            : (constraints.maxWidth - 16) / 3,
-                        child: TextButton(
-                            style: TextButton.styleFrom(
-                                backgroundColor: activityTab == tab
-                                    ? AppColors.navy
-                                    : AppColors.white,
-                                foregroundColor: activityTab == tab
-                                    ? AppColors.white
-                                    : AppColors.navy,
-                                shape: RoundedRectangleBorder(
-                                    borderRadius:
-                                        BorderRadius.circular(AppRadii.r12))),
-                            onPressed: () => setState(() => activityTab = tab),
-                            child: Text(
-                                '$tab (${tab == 'My shifts' ? joinedItems.length : tab == 'Posted' ? postedItems.length : favoriteItems.length})',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis))))
-                    .toList())),
+          builder: (context, constraints) => Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: ['My shifts', 'Posted', 'Favorites']
+                .map(
+                  (tab) => SizedBox(
+                    width: constraints.maxWidth < 300
+                        ? constraints.maxWidth
+                        : (constraints.maxWidth - 16) / 3,
+                    child: TextButton(
+                      style: TextButton.styleFrom(
+                        backgroundColor: activityTab == tab
+                            ? AppColors.navy
+                            : AppColors.white,
+                        foregroundColor: activityTab == tab
+                            ? AppColors.white
+                            : AppColors.navy,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppRadii.r12),
+                        ),
+                      ),
+                      onPressed: () => setState(() => activityTab = tab),
+                      child: Text(
+                        '$tab (${tab == 'My shifts' ? joinedItems.length : tab == 'Posted' ? postedItems.length : favoriteItems.length})',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ),
+                )
+                .toList(),
+          ),
+        ),
         if (activityTab == 'My shifts') ...[
           const SizedBox(height: 14),
-          Row(children: [
-            Expanded(
+          Row(
+            children: [
+              Expanded(
                 child: _viewTab(
-                    'Agenda',
-                    Icons.view_agenda_outlined,
-                    !calendar && !pastShifts,
-                    () => setState(() {
-                          calendar = false;
-                          pastShifts = false;
-                        }))),
-            Expanded(
+                  'Agenda',
+                  Icons.view_agenda_outlined,
+                  !calendar && !pastShifts,
+                  () => setState(() {
+                    calendar = false;
+                    pastShifts = false;
+                  }),
+                ),
+              ),
+              Expanded(
                 child: _viewTab(
-                    'Calendar',
-                    Icons.calendar_month_outlined,
-                    calendar && !pastShifts,
-                    () => setState(() {
-                          calendar = true;
-                          pastShifts = false;
-                        }))),
-            Expanded(
-                child: _viewTab('Past shifts', Icons.history, pastShifts,
-                    () => setState(() => pastShifts = true))),
-          ]),
+                  'Calendar',
+                  Icons.calendar_month_outlined,
+                  calendar && !pastShifts,
+                  () => setState(() {
+                    calendar = true;
+                    pastShifts = false;
+                  }),
+                ),
+              ),
+              Expanded(
+                child: _viewTab(
+                  'Past shifts',
+                  Icons.history,
+                  pastShifts,
+                  () => setState(() => pastShifts = true),
+                ),
+              ),
+            ],
+          ),
           if (calendar && !pastShifts)
             EventCalendar(
-                selectedDate: selectedDate,
-                events: joinedItems,
-                onSelected: (date) => setState(() => selectedDate = date)),
+              selectedDate: selectedDate,
+              events: joinedItems,
+              onSelected: (date) => setState(() => selectedDate = date),
+            ),
           const SizedBox(height: 18),
           Row(
             children: [
@@ -235,24 +266,22 @@ class _MyPageScreenState extends State<MyPageScreen> {
               ),
               const SizedBox(width: 11),
               Expanded(
-                  child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    pastShifts
-                        ? '${visibleJoined.length} past shifts'
-                        : !calendar
-                            ? '${visibleJoined.length} upcoming shifts'
-                            : '${selectedDate.day} ${_month(selectedDate.month)} ${selectedDate.year} · ${visibleJoined.length} shifts',
-                    maxLines: 2,
-                    style: AppTextStyles.bodyBold,
-                  ),
-                  const Text(
-                    'Gothenburg',
-                    style: AppTextStyles.captionMuted,
-                  ),
-                ],
-              )),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      pastShifts
+                          ? '${visibleJoined.length} past shifts'
+                          : !calendar
+                              ? '${visibleJoined.length} upcoming shifts'
+                              : '${selectedDate.day} ${_month(selectedDate.month)} ${selectedDate.year} · ${visibleJoined.length} shifts',
+                      maxLines: 2,
+                      style: AppTextStyles.bodyBold,
+                    ),
+                    const Text('Gothenburg', style: AppTextStyles.captionMuted),
+                  ],
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 10),
@@ -297,7 +326,11 @@ class _MyPageScreenState extends State<MyPageScreen> {
   }
 
   Widget _viewTab(
-      String label, IconData icon, bool selected, VoidCallback onTap) {
+    String label,
+    IconData icon,
+    bool selected,
+    VoidCallback onTap,
+  ) {
     return TextButton(
       onPressed: onTap,
       style: TextButton.styleFrom(
@@ -306,16 +339,22 @@ class _MyPageScreenState extends State<MyPageScreen> {
       ),
       child: FittedBox(
         fit: BoxFit.scaleDown,
-        child: Row(mainAxisSize: MainAxisSize.min, children: [
-          Icon(icon, size: 16),
-          const SizedBox(width: 4),
-          Text(label,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 16),
+            const SizedBox(width: 4),
+            Text(
+              label,
               maxLines: 1,
               softWrap: false,
               style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: selected ? FontWeight.bold : FontWeight.normal)),
-        ]),
+                fontSize: 12,
+                fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

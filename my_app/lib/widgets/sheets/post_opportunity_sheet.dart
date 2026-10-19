@@ -1,8 +1,13 @@
 import 'dart:typed_data';
 import 'dart:async';
+
 import 'package:flutter/material.dart';
+
+import '../../models/opportunity_filters.dart';
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:latlong2/latlong.dart';
+
 import '../../screens/pick_location_screen.dart';
 import '../../models/opportunity.dart';
 import '../../theme/app_theme.dart';
@@ -66,7 +71,7 @@ class _PostOpportunitySheetState extends State<PostOpportunitySheet> {
     }
   }
 
-  String category = 'Community';
+  String category = 'Social';
   DateTime? date;
   TimeOfDay? start;
   TimeOfDay? end;
@@ -86,161 +91,159 @@ class _PostOpportunitySheetState extends State<PostOpportunitySheet> {
   @override
   Widget build(BuildContext context) {
     return PopScope(
-        canPop: !busy,
-        child: AppSheet(
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+      canPop: !busy,
+      child: AppSheet(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton(
+                onPressed: busy ? null : () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+            ),
+            const SmallKicker('FOR ORGANIZATIONS & NEIGHBORS'),
+            const Text(
+              'Post an opportunity',
+              style: AppTextStyles.compactSheetTitle,
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              'Find kind people nearby for a short, meaningful task.',
+              style: AppTextStyles.bodyMuted,
+            ),
+            const SizedBox(height: 20),
+            PhotoEditor(
+              label: 'Choose event cover photo',
+              busy: busy,
+              reference: removePhoto ? null : widget.existing?.coverImageUrl,
+              selected: photo,
+              onSelected: (bytes) => setState(() {
+                photo = bytes;
+                removePhoto = false;
+              }),
+              onRemove: () => setState(() {
+                photo = null;
+                removePhoto = true;
+              }),
+            ),
+            _field('Opportunity title', title, 'e.g. Pack weekend food bags'),
+            _field('Host', organization, 'Your name or organization'),
+            DropdownButtonFormField<String>(
+              initialValue: category,
+              decoration: _decoration('Category'),
+              items: {...OpportunityFilters.categories, category}
+                  .map((x) => DropdownMenuItem(value: x, child: Text(x)))
+                  .toList(),
+              onChanged: (value) {
+                if (value != null) setState(() => category = value);
+              },
+            ),
+            const SizedBox(height: 12),
+            Row(
               children: [
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: TextButton(
-                    onPressed: busy ? null : () => Navigator.pop(context),
-                    child: const Text('Cancel'),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: _pickDate,
+                    icon: const Icon(
+                      Icons.calendar_today_outlined,
+                      size: AppIconSizes.s18,
+                    ),
+                    label: Text(
+                      date == null ? 'Date' : '${date!.day}/${date!.month}',
+                    ),
                   ),
                 ),
-                const SmallKicker('FOR ORGANIZATIONS & NEIGHBORS'),
-                const Text(
-                  'Post an opportunity',
-                  style: AppTextStyles.compactSheetTitle,
+                const SizedBox(width: 8),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: _pickTime,
+                    icon: const Icon(Icons.schedule, size: AppIconSizes.s18),
+                    label: Text(start == null ? 'Starts' : _clock(start!)),
+                  ),
                 ),
-                const SizedBox(height: 6),
-                const Text(
-                  'Find kind people nearby for a short, meaningful task.',
-                  style: AppTextStyles.bodyMuted,
-                ),
-                const SizedBox(height: 20),
-                PhotoEditor(
-                    label: 'Choose event cover photo',
-                    busy: busy,
-                    reference:
-                        removePhoto ? null : widget.existing?.coverImageUrl,
-                    selected: photo,
-                    onSelected: (bytes) => setState(() {
-                          photo = bytes;
-                          removePhoto = false;
-                        }),
-                    onRemove: () => setState(() {
-                          photo = null;
-                          removePhoto = true;
-                        })),
-                _field(
-                    'Opportunity title', title, 'e.g. Pack weekend food bags'),
-                _field('Host', organization, 'Your name or organization'),
-                DropdownButtonFormField<String>(
-                  initialValue: category,
-                  decoration: _decoration('Category'),
-                  items: ['Community', 'Outdoors', 'Social', 'Food']
-                      .map(
-                        (x) => DropdownMenuItem(value: x, child: Text(x)),
-                      )
-                      .toList(),
-                  onChanged: (value) {
-                    if (value != null) setState(() => category = value);
-                  },
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: _pickDate,
-                        icon: const Icon(
-                          Icons.calendar_today_outlined,
-                          size: AppIconSizes.s18,
-                        ),
-                        label: Text(
-                          date == null ? 'Date' : '${date!.day}/${date!.month}',
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: _pickTime,
-                        icon:
-                            const Icon(Icons.schedule, size: AppIconSizes.s18),
-                        label: Text(
-                          start == null ? 'Starts' : start!.format(context),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                OutlinedButton.icon(
-                    onPressed: busy ? null : _pickEndTime,
-                    icon: const Icon(Icons.schedule),
-                    label: Text(end == null
-                        ? 'End time (required)'
-                        : 'Ends ${end!.format(context)}')),
-                _field('Address', place, 'Street or meeting point'),
-                OutlinedButton.icon(
-                  onPressed: () async {
-                    final result = await Navigator.push<LatLng>(
-                        context,
-                        MaterialPageRoute(
-                            builder: (_) =>
-                                PickLocationScreen(initialPoint: mapPoint)));
-                    if (result != null && mounted) {
-                      setState(() => mapPoint = result);
-                    }
-                  },
-                  icon: const Icon(Icons.location_on_outlined),
-                  label: Text(mapPoint == null
-                      ? 'Place map pin'
-                      : 'Map pin placed · change'),
-                ),
-                const SizedBox(height: 12),
-                _field('Volunteers', spots),
-                _field(
-                  'What will volunteers do?',
-                  description,
-                  'Keep it clear, friendly, and easy to understand.',
-                  3,
-                ),
-                const SizedBox(height: 10),
-                Column(
-                    key: submitArea,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      if (error != null)
-                        Padding(
-                            padding:
-                                const EdgeInsets.only(bottom: AppSpacing.s12),
-                            child: Semantics(
-                                liveRegion: true,
-                                child: Text(error!,
-                                    key: const ValueKey('publishError'),
-                                    style: AppTextStyles.formError))),
-                      if (busy)
-                        Padding(
-                            padding:
-                                const EdgeInsets.only(bottom: AppSpacing.s12),
-                            child: Text(
-                                slowSave
-                                    ? 'Still waiting for Firebase. Check your internet connection. Your save is still in progress.'
-                                    : 'Saving your opportunity…',
-                                style: AppTextStyles.bodyMuted)),
-                      SizedBox(
-                        width: double.infinity,
-                        child: FilledButton.icon(
-                          onPressed: busy ? null : _publish,
-                          icon: busy
-                              ? const SizedBox(
-                                  width: 18,
-                                  height: 18,
-                                  child:
-                                      CircularProgressIndicator(strokeWidth: 2))
-                              : const Icon(Icons.arrow_forward),
-                          label: Text(busy ? 'Saving…' : 'Publish opportunity'),
-                        ),
-                      ),
-                    ]),
               ],
             ),
-          ),
-        ));
+            const SizedBox(height: 8),
+            OutlinedButton.icon(
+              onPressed: busy ? null : _pickEndTime,
+              icon: const Icon(Icons.schedule),
+              label: Text(end == null ? 'End time' : 'Ends ${_clock(end!)}'),
+            ),
+            _field('Address', place, 'Street or meeting point'),
+            OutlinedButton.icon(
+              onPressed: () async {
+                final result = await Navigator.push<LatLng>(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => PickLocationScreen(initialPoint: mapPoint),
+                  ),
+                );
+                if (result != null && mounted) {
+                  setState(() => mapPoint = result);
+                }
+              },
+              icon: const Icon(Icons.location_on_outlined),
+              label: Text(
+                mapPoint == null ? 'Place map pin' : 'Map pin placed · change',
+              ),
+            ),
+            const SizedBox(height: 12),
+            _field('Volunteers', spots),
+            _field(
+              'What will volunteers do?',
+              description,
+              'Keep it clear, friendly, and easy to understand.',
+              3,
+            ),
+            const SizedBox(height: 10),
+            Column(
+              key: submitArea,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (error != null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: AppSpacing.s12),
+                    child: Semantics(
+                      liveRegion: true,
+                      child: Text(
+                        error!,
+                        key: const ValueKey('publishError'),
+                        style: AppTextStyles.formError,
+                      ),
+                    ),
+                  ),
+                if (busy)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: AppSpacing.s12),
+                    child: Text(
+                      slowSave
+                          ? 'Still waiting for Firebase. Check your internet connection. Your save is still in progress.'
+                          : 'Saving your opportunity…',
+                      style: AppTextStyles.bodyMuted,
+                    ),
+                  ),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    onPressed: busy ? null : _publish,
+                    icon: busy
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.arrow_forward),
+                    label: Text(busy ? 'Saving…' : 'Publish opportunity'),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _field(
@@ -281,18 +284,29 @@ class _PostOpportunitySheetState extends State<PostOpportunitySheet> {
     if (picked != null) setState(() => date = picked);
   }
 
+  String _clock(TimeOfDay value) =>
+      '${value.hour.toString().padLeft(2, '0')}:${value.minute.toString().padLeft(2, '0')}';
+
+  Widget _timePicker(BuildContext context, Widget? child) => MediaQuery(
+        data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
+        child: child!,
+      );
+
   Future<void> _pickTime() async {
     final picked = await showTimePicker(
       context: context,
       initialTime: const TimeOfDay(hour: 10, minute: 0),
+      builder: _timePicker,
     );
     if (picked != null) setState(() => start = picked);
   }
 
   Future<void> _pickEndTime() async {
     final picked = await showTimePicker(
-        context: context,
-        initialTime: end ?? const TimeOfDay(hour: 12, minute: 0));
+      context: context,
+      initialTime: end ?? const TimeOfDay(hour: 12, minute: 0),
+      builder: _timePicker,
+    );
     if (picked != null && mounted) setState(() => end = picked);
   }
 
@@ -319,15 +333,19 @@ class _PostOpportunitySheetState extends State<PostOpportunitySheet> {
     }
     if (title.text.trim().length > 200 ||
         description.text.trim().length > 10000) {
-      setState(() => error =
-          'Keep the title within 200 characters and the description within 10000 characters.');
+      setState(
+        () => error =
+            'Keep the title within 200 characters and the description within 10000 characters.',
+      );
       revealSubmitArea();
       return;
     }
 
     if (end!.hour * 60 + end!.minute <= start!.hour * 60 + start!.minute) {
-      setState(() => error =
-          'Choose an end time later than the start time on the same date.');
+      setState(
+        () => error =
+            'Choose an end time later than the start time on the same date.',
+      );
       revealSubmitArea();
       return;
     }
@@ -335,18 +353,27 @@ class _PostOpportunitySheetState extends State<PostOpportunitySheet> {
       id: draftId,
       removeCoverImage: removePhoto,
       attendeeCount: widget.existing?.attendeeCount ?? 0,
-      endsAt:
-          DateTime(date!.year, date!.month, date!.day, end!.hour, end!.minute),
+      endsAt: DateTime(
+        date!.year,
+        date!.month,
+        date!.day,
+        end!.hour,
+        end!.minute,
+      ),
       ownerId: widget.existing?.ownerId ?? '',
       coverImageUrl: widget.existing?.coverImageUrl,
       imageUrls: widget.existing?.imageUrls ?? const [],
       startsAt: DateTime(
-          date!.year, date!.month, date!.day, start!.hour, start!.minute),
+        date!.year,
+        date!.month,
+        date!.day,
+        start!.hour,
+        start!.minute,
+      ),
       organization: organization.text.trim(),
       title: title.text.trim(),
       date: date == null ? 'New' : '${date!.day} ${_month(date!.month)}',
-      time:
-          '${start!.format(context)}${end == null ? '' : ' – ${end!.format(context)}'}',
+      time: '${_clock(start!)}${end == null ? '' : ' – ${_clock(end!)}'}',
       place: place.text.trim(),
       distance: 'New',
       category: category,
@@ -390,8 +417,11 @@ class _PostOpportunitySheetState extends State<PostOpportunitySheet> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final target = submitArea.currentContext;
       if (mounted && target != null) {
-        Scrollable.ensureVisible(target,
-            duration: const Duration(milliseconds: 200), alignment: 1);
+        Scrollable.ensureVisible(
+          target,
+          duration: const Duration(milliseconds: 200),
+          alignment: 1,
+        );
       }
     });
   }

@@ -1,7 +1,7 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {MAX_BYTES, parseReference, requireOwner, requireFirebaseClaims,
-  validateImage, readLimited} from './security.mjs';
+  validateImage, readLimited, isGuestReadablePhoto} from './security.mjs';
 const id = '12345678-1234-1234-1234-123456789abc';
 const ref = `supabase://event-images/member/${id}.jpg`;
 
@@ -41,4 +41,11 @@ test('a streamed body cannot bypass the limit by omitting Content-Length', async
   await assert.rejects(readLimited(request,3),{status:413});
   const small = new Request('https://example.com',{method:'POST',body:'ok'});
   assert.equal(new TextDecoder().decode(await readLimited(small,3)),'ok');
+});
+
+test('only canonical event-image reads allow guest access', () => {
+  assert.equal(isGuestReadablePhoto('read', ref), true);
+  assert.equal(isGuestReadablePhoto('read', ref.replace('event-images','profile-images')), false);
+  for (const action of ['upload','delete','unknown']) assert.equal(isGuestReadablePhoto(action,ref),false);
+  for (const invalid of [ref+'?token=x',ref.replace('event-images','unknown'),ref.replace(id,'../profile')]) assert.throws(()=>isGuestReadablePhoto('read',invalid),{status:400});
 });

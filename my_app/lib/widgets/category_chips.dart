@@ -1,53 +1,53 @@
 import 'package:flutter/material.dart';
+
 import '../theme/app_theme.dart';
+import '../models/opportunity_filters.dart';
 
 class CategoryChips extends StatelessWidget {
-  final String selected;
+  final Set<String> selected;
   final ValueChanged<String> onSelected;
-
   const CategoryChips({
     super.key,
     required this.selected,
     required this.onSelected,
   });
-
   @override
-  Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      padding:
-          const EdgeInsets.only(top: AppSpacing.s14, bottom: AppSpacing.s2),
-      child: Row(
-        children: ['All', 'Today', 'Outdoors', 'Social', 'Food']
-            .map(
-              (category) => Padding(
-                padding: const EdgeInsets.only(right: AppSpacing.s8),
-                child: ChoiceChip(
-                  label: Text(
-                    category,
-                    style: TextStyle(
-                      fontSize: AppFonts.caption,
-                      fontWeight: AppFonts.medium,
-                      color: selected == category
-                          ? AppColors.white
-                          : AppColors.navy,
+  Widget build(BuildContext context) => SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.only(top: 14, bottom: 2),
+        child: Row(
+          children: OpportunityFilters.labels
+              .map(
+                (category) => Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: FilterChip(
+                    label: Text(category),
+                    selected: selected.contains(category),
+                    onSelected: (_) => onSelected(category),
+                    showCheckmark: true,
+                    checkmarkColor: AppColors.navy,
+                    selectedColor: AppColors.paleGreen,
+                    backgroundColor: AppColors.background,
+                    labelStyle: const TextStyle(
+                      color: AppColors.navy,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    side: BorderSide(
+                      color: selected.contains(category)
+                          ? AppColors.paleGreen
+                          : AppColors.chipBorder,
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
                     ),
                   ),
-                  selected: selected == category,
-                  onSelected: (_) => onSelected(category),
-                  selectedColor: AppColors.navy,
-                  backgroundColor: AppColors.transparent,
-                  side: const BorderSide(color: AppColors.chipBorder),
-                  labelStyle: TextStyle(
-                    color: selected == category
-                        ? AppColors.white
-                        : AppColors.muted,
-                  ),
                 ),
-              ),
-            )
-            .toList(),
-      ),
-    );
-  }
+              )
+              .toList(),
+        ),
+      );
 }

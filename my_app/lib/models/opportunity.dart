@@ -15,7 +15,21 @@ class Opportunity {
   final String organization;
   final String title;
   final String date;
-  final String time;
+  final String _time;
+  String get time {
+    String clock(DateTime value) =>
+        "${value.hour.toString().padLeft(2, '0')}:${value.minute.toString().padLeft(2, '0')}";
+    if (startsAt != null) {
+      return "${clock(startsAt!)}${endsAt == null ? '' : ' – ${clock(endsAt!)}'}";
+    }
+    return _time.replaceAllMapped(
+        RegExp(r'(\d{1,2}):(\d{2})\s*(AM|PM)', caseSensitive: false), (m) {
+      final hour =
+          int.parse(m[1]!) % 12 + (m[3]!.toUpperCase() == 'PM' ? 12 : 0);
+      return "${hour.toString().padLeft(2, '0')}:${m[2]}";
+    });
+  }
+
   final String place;
   final String distance;
   final String category;
@@ -30,7 +44,7 @@ class Opportunity {
     required this.organization,
     required this.title,
     required this.date,
-    required this.time,
+    required String time,
     required this.place,
     required this.distance,
     required this.category,
@@ -47,7 +61,7 @@ class Opportunity {
     this.attendeeCount = 0,
     this.cancelled = false,
     this.removeCoverImage = false,
-  });
+  }) : _time = time;
 
   /// End time defines completion; a missing end falls back to the start.
   DateTime? get completionTime => endsAt ?? startsAt;

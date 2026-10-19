@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../theme/app_theme.dart';
 
 class AppHeader extends StatelessWidget {
@@ -42,7 +43,9 @@ class AppHeader extends StatelessWidget {
           child: Container(
             constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
             padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.s9, vertical: AppSpacing.s7),
+              horizontal: AppSpacing.s9,
+              vertical: AppSpacing.s7,
+            ),
             decoration: BoxDecoration(
               color: AppColors.white,
               border: Border.all(color: AppColors.border),
@@ -59,14 +62,8 @@ class AppHeader extends StatelessWidget {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Your area',
-                      style: AppTextStyles.captionMuted,
-                    ),
-                    Text(
-                      area,
-                      style: AppTextStyles.captionBold,
-                    ),
+                    const Text('Your area', style: AppTextStyles.captionMuted),
+                    Text(area, style: AppTextStyles.captionBold),
                   ],
                 ),
                 const Icon(

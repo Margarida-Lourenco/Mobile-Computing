@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import {initializeTestEnvironment,assertSucceeds,assertFails} from '@firebase/rules-unit-testing';
-import {doc,setDoc,getDoc,getDocs,collection,updateDoc,deleteDoc,runTransaction,serverTimestamp,Timestamp,writeBatch} from 'firebase/firestore';
+import {doc,setDoc,getDoc,getDocs,collection,updateDoc,deleteDoc,runTransaction,increment,serverTimestamp,Timestamp,writeBatch} from 'firebase/firestore';
 const env=await initializeTestEnvironment({projectId:'demo-good-together',firestore:{host:'127.0.0.1',port:8088,rules:fs.readFileSync(new URL('../../firestore.rules',import.meta.url),'utf8')}});
 const dbFor=id=>env.authenticatedContext(id).firestore();
 const host=dbFor('host');const users=['a','b','c'];
@@ -21,7 +21,7 @@ async function attendance(id,joining=true,{omitHostNotice=false}={}) {
   return true;
  });
 }
-async function registerMember(id) {
+async function registerMemberOnce(id) {
  const db=dbFor(id), marker=doc(db,`members/${id}`), stats=doc(db,'communityStats/members');
  return runTransaction(db,async tx=>{
   const existing=await tx.get(marker), counter=await tx.get(stats);
@@ -29,6 +29,12 @@ async function registerMember(id) {
   tx.set(marker,{createdAt:serverTimestamp()});
   tx.set(stats,{accounts:(counter.data()?.accounts??0)+1,updatedAt:serverTimestamp()});
  });
+}
+async function registerMember(id) {
+ for(let attempt=0;attempt<5;attempt++) {
+  try {return await registerMemberOnce(id);}
+  catch(e) {if(attempt===4 || !['permission-denied','aborted','unavailable'].includes(e.code))throw e;await new Promise(resolve=>setTimeout(resolve,150*(attempt+1)));}
+ }
 }
 let checks=0;const check=(name,fn)=>Promise.resolve().then(fn).then(()=>{checks++;console.log('PASS '+name);});
 try {
@@ -55,8 +61,20 @@ try {
  await check('marker without counter increment cannot be created',()=>assertFails(setDoc(doc(host,'members/host'),{createdAt:serverTimestamp()})));
  await check('counter increment without marker cannot be created',()=>assertFails(updateDoc(doc(host,'communityStats/members'),{accounts:4,updatedAt:serverTimestamp()})));
  await check('cannot register another account marker',()=>assertFails(setDoc(doc(host,'members/stranger'),{createdAt:serverTimestamp()})));
- await check('anonymous cannot read member totals',()=>assertFails(getDoc(doc(env.unauthenticatedContext().firestore(),'communityStats/members'))));
- await check('anonymous cannot read events',()=>assertFails(getDoc(doc(env.unauthenticatedContext().firestore(),'opportunities/event'))));
+ await check('guest can read member totals',()=>assertSucceeds(getDoc(doc(env.unauthenticatedContext().firestore(),'communityStats/members'))));
+ await check('guest can read events',()=>assertSucceeds(getDoc(doc(env.unauthenticatedContext().firestore(),'opportunities/event'))));
+ await check('guest cannot create events or sign up or favorite',async()=>{
+  const guest=env.unauthenticatedContext().firestore();
+  await assertFails(setDoc(doc(guest,'opportunities/guest'),eventData));
+  await assertFails(setDoc(doc(guest,'users/a/favorites/event'),{createdAt:serverTimestamp()}));
+  await assertFails(setDoc(doc(guest,'users/a/joined/event'),{createdAt:serverTimestamp()}));
+  await assertFails(getDoc(doc(guest,'users/a')));
+  await assertFails(getDocs(collection(guest,'opportunities/event/attendees')));
+ });
+ await check('all new posting categories are accepted',async()=>{
+  for(const category of ['Social','Outdoors','Animals','Housework','Education','Culture','Sports'])
+   await assertSucceeds(setDoc(doc(host,'opportunities/category-'+category),{...eventData,category,createdAt:serverTimestamp(),updatedAt:serverTimestamp()}));
+ });
  await check('host can create event with zero attendance',()=>assertSucceeds(setDoc(doc(host,'opportunities/new'),{...eventData,createdAt:serverTimestamp(),updatedAt:serverTimestamp()})));
  await check('end time is required by backend rules',()=>assertFails(setDoc(doc(host,'opportunities/missing-end'),{...eventData,endsAt:null,createdAt:serverTimestamp(),updatedAt:serverTimestamp()})));
  await check('end time must be later than start',()=>assertFails(setDoc(doc(host,'opportunities/invalid-end'),{...eventData,endsAt:eventData.startsAt,createdAt:serverTimestamp(),updatedAt:serverTimestamp()})));

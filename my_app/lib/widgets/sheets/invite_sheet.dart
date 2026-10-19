@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../models/opportunity.dart';
 import '../../theme/app_theme.dart';
 import '../app_sheet.dart';
@@ -57,10 +58,7 @@ class _InviteSheetState extends State<InviteSheet> {
                 foregroundColor: AppColors.navy,
                 child: Text(friend[0]),
               ),
-              title: Text(
-                friend[1],
-                style: AppTextStyles.bodyMedium,
-              ),
+              title: Text(friend[1], style: AppTextStyles.bodyMedium),
               trailing: Icon(
                 selected.contains(friend[1])
                     ? Icons.check_circle

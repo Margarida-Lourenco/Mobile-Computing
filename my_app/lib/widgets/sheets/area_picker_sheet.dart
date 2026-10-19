@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../theme/app_theme.dart';
 import '../app_sheet.dart';
 import '../icon_box.dart';
@@ -34,10 +35,7 @@ class AreaPickerSheet extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           const SmallKicker('EXPLORE LOCALLY'),
-          const Text(
-            'Choose your area',
-            style: AppTextStyles.sheetTitle,
-          ),
+          const Text('Choose your area', style: AppTextStyles.sheetTitle),
           const SizedBox(height: 6),
           const Text(
             'The map will open around this neighborhood.',
@@ -56,14 +54,8 @@ class AreaPickerSheet extends StatelessWidget {
                 color: AppColors.paleGreen,
                 size: AppIconSizes.s42,
               ),
-              title: Text(
-                entry.key,
-                style: AppTextStyles.bodyBold,
-              ),
-              subtitle: Text(
-                entry.value,
-                style: AppTextStyles.caption,
-              ),
+              title: Text(entry.key, style: AppTextStyles.bodyBold),
+              subtitle: Text(entry.value, style: AppTextStyles.caption),
               trailing: Icon(
                 currentArea == entry.key
                     ? Icons.check_circle

@@ -4,8 +4,11 @@ class CommunityImpact {
   final double hours;
   final int? accounts;
   final String month;
-  const CommunityImpact(
-      {required this.hours, required this.accounts, required this.month});
+  const CommunityImpact({
+    required this.hours,
+    required this.accounts,
+    required this.month,
+  });
 
   /// Current European winter/summer time rules for the app's Gothenburg month.
   static int _offset(DateTime utc) {
@@ -21,7 +24,10 @@ class CommunityImpact {
   }
 
   factory CommunityImpact.fromEvents(
-      Iterable<Opportunity> events, int? accounts, DateTime now) {
+    Iterable<Opportunity> events,
+    int? accounts,
+    DateTime now,
+  ) {
     final utcNow = now.toUtc();
     final localNow = utcNow.add(Duration(hours: _offset(utcNow)));
     final first = DateTime.utc(localNow.year, localNow.month, 1);
@@ -43,8 +49,9 @@ class CommunityImpact {
           event.attendeeCount.clamp(0, event.spots);
     }
     return CommunityImpact(
-        hours: hours,
-        accounts: accounts,
-        month: '${localNow.year}-${localNow.month.toString().padLeft(2, '0')}');
+      hours: hours,
+      accounts: accounts,
+      month: '${localNow.year}-${localNow.month.toString().padLeft(2, '0')}',
+    );
   }
 }

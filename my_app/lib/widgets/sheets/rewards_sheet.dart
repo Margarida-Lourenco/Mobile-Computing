@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../theme/app_theme.dart';
 import '../../models/reward_progress.dart';
 import '../app_sheet.dart';
@@ -16,25 +17,25 @@ class RewardsSheet extends StatelessWidget {
         'First Step',
         'Completed your first activity',
         AppIcons.badge,
-        rewards.completed >= 1
+        rewards.completed >= 1,
       ],
       [
         'Helping Hand',
         'Shared 3 hours of your time',
         Icons.favorite,
-        rewards.hours >= 3
+        rewards.hours >= 3,
       ],
       [
         'Team Player',
         'Completed 3 activities',
         Icons.people_outline,
-        rewards.completed >= 3
+        rewards.completed >= 3,
       ],
       [
         'Local Hero',
         'Complete 5 local activities',
         Icons.location_on_outlined,
-        rewards.completed >= 5
+        rewards.completed >= 5,
       ],
     ];
 
@@ -45,10 +46,7 @@ class RewardsSheet extends StatelessWidget {
           const IconBox(icon: AppIcons.badge, color: AppColors.green),
           const SizedBox(height: 12),
           const SmallKicker('YOUR KINDNESS COLLECTION'),
-          const Text(
-            'Badges of good',
-            style: AppTextStyles.sheetTitle,
-          ),
+          const Text('Badges of good', style: AppTextStyles.sheetTitle),
           const Text(
             'Completed shifts and hours shared earn your next level.',
             style: AppTextStyles.bodyMuted,

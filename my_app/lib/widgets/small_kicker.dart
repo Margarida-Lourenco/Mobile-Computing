@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../theme/app_theme.dart';
 
 class SmallKicker extends StatelessWidget {
@@ -8,9 +9,6 @@ class SmallKicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      text,
-      style: AppTextStyles.smallKicker,
-    );
+    return Text(text, style: AppTextStyles.smallKicker);
   }
 }

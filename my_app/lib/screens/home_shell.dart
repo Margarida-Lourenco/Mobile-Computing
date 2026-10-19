@@ -1,7 +1,11 @@
 import '../theme/app_theme.dart';
+
 import 'package:flutter/material.dart';
+
 import 'dart:async';
+
 import 'package:firebase_auth/firebase_auth.dart';
+
 import '../services/firebase_repository.dart';
 import '../data/sample_opportunities.dart';
 import '../models/opportunity.dart';
@@ -16,6 +20,9 @@ import '../widgets/sheets/opportunity_details_sheet.dart';
 import '../widgets/sheets/post_opportunity_sheet.dart';
 import '../widgets/sheets/rewards_sheet.dart';
 import 'discover_screen.dart';
+import 'auth_screen.dart';
+import '../models/opportunity_filters.dart';
+import '../widgets/category_chips.dart';
 import 'edit_info_screen.dart';
 import 'map_screen.dart';
 import 'my_page_screen.dart';
@@ -25,7 +32,8 @@ import '../widgets/sheets/attendees_sheet.dart';
 
 class HomeShell extends StatefulWidget {
   final bool connected;
-  const HomeShell({super.key, this.connected = false});
+  final bool signedIn;
+  const HomeShell({super.key, this.connected = false, this.signedIn = false});
 
   @override
   State<HomeShell> createState() => _HomeShellState();
@@ -47,17 +55,22 @@ class _HomeShellState extends State<HomeShell> {
       : CommunityImpact.fromEvents(opportunities, memberCount, DateTime.now());
   String? impactStatus = 'Connect Firebase to view community totals.';
   void watch<T>(Stream<T> stream, void Function(T) apply) {
-    subscriptions.add(stream.listen((value) {
-      if (mounted) setState(() => apply(value));
-    }, onError: (Object e) {
-      if (mounted) {
-        setState(() {
-          loading = false;
-          loadError =
-              'Could not load your data. Check connection and Firebase rules.';
-        });
-      }
-    }));
+    subscriptions.add(
+      stream.listen(
+        (value) {
+          if (mounted) setState(() => apply(value));
+        },
+        onError: (Object e) {
+          if (mounted) {
+            setState(() {
+              loading = false;
+              loadError =
+                  'Could not load your data. Check connection and Firebase rules.';
+            });
+          }
+        },
+      ),
+    );
   }
 
   void connect() {
@@ -66,31 +79,38 @@ class _HomeShellState extends State<HomeShell> {
     }
     subscriptions.clear();
     repository = FirebaseRepository();
-    _initializeMember();
+    if (widget.signedIn) _initializeMember();
     loading = true;
     loadError = null;
     memberCount = null;
     impactStatus = 'Loading community totals…';
-    subscriptions.add(repository!.memberCount().listen((value) {
-      if (mounted) {
-        setState(() {
-          memberCount = value;
-          impactStatus =
-              value == null ? 'Member count is being prepared.' : null;
-        });
-      }
-    }, onError: (Object error) {
-      if (mounted) {
-        setState(() {
-          memberCount = null;
-          impactStatus = 'Member count unavailable. Please retry.';
-        });
-      }
-    }));
+    subscriptions.add(
+      repository!.memberCount().listen(
+        (value) {
+          if (mounted) {
+            setState(() {
+              memberCount = value;
+              impactStatus = value == null
+                  ? 'Member totals are unavailable. Tap Retry to reconnect.'
+                  : null;
+            });
+          }
+        },
+        onError: (Object error) {
+          if (mounted) {
+            setState(() {
+              memberCount = null;
+              impactStatus = 'Member count unavailable. Please retry.';
+            });
+          }
+        },
+      ),
+    );
     watch(repository!.events(), (items) {
       opportunities = items;
       loading = false;
     });
+    if (!widget.signedIn) return;
     watch(repository!.profile(), (value) => profile = value);
     watch(repository!.membership('favorites'), (value) => favorites = value);
     watch(repository!.membership('joined'), (value) => joined = value);
@@ -108,7 +128,8 @@ class _HomeShellState extends State<HomeShell> {
     } catch (error) {
       if (mounted) {
         setState(
-            () => loadError = 'Could not load your profile. Please retry.');
+          () => loadError = 'Could not load your profile. Please retry.',
+        );
       }
       return;
     }
@@ -118,13 +139,19 @@ class _HomeShellState extends State<HomeShell> {
       // A stats permission/network problem must not block signing in or shifts.
       debugPrint('Member count sync failed: $error');
       if (mounted) {
-        setState(() => impactStatus = 'Member count is still syncing.');
+        setState(
+          () => impactStatus = memberCount == null
+              ? 'Member totals could not be updated. Tap Retry to reconnect.'
+              : null,
+        );
       }
     }
   }
 
-  Future<void> perform(Future<void> Function() action,
-      {VoidCallback? onSuccess}) async {
+  Future<void> perform(
+    Future<void> Function() action, {
+    VoidCallback? onSuccess,
+  }) async {
     if (saving) return;
     setState(() => saving = true);
     try {
@@ -132,8 +159,9 @@ class _HomeShellState extends State<HomeShell> {
       if (mounted) onSuccess?.call();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Could not save changes: $e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Could not save changes: $e')));
       }
     } finally {
       if (mounted) setState(() => saving = false);
@@ -141,9 +169,16 @@ class _HomeShellState extends State<HomeShell> {
   }
 
   bool get canWrite {
+    if (!widget.signedIn) {
+      _promptSignIn();
+      return false;
+    }
     if (widget.connected) return true;
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Preview mode: connect Firebase to save changes.')));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Preview mode: connect Firebase to save changes.'),
+      ),
+    );
     return false;
   }
 
@@ -153,11 +188,13 @@ class _HomeShellState extends State<HomeShell> {
   Set<String> favorites = {};
   Set<String> joined = {};
   Set<String> posted = {};
-  String category = 'All';
+  Set<String> categories = {'All'};
   String area = 'Majorna';
   int navIndex = 0;
   ProfileInfo profile = const ProfileInfo(
-      name: 'Linnea Mårtensson', location: 'Gothenburg, Sweden');
+    name: 'Neighbor',
+    location: 'Gothenburg, Sweden',
+  );
 
   @override
   void initState() {
@@ -169,23 +206,30 @@ class _HomeShellState extends State<HomeShell> {
     }
     if (widget.connected) {
       opportunities = [];
-      profile = const ProfileInfo(name: 'Member', location: '');
+      profile = ProfileInfo(
+        name: widget.signedIn ? 'Member' : 'Neighbor',
+        location: '',
+      );
       connect();
     }
   }
 
   Future<void> _editProfile() async {
     if (!widget.connected) {
-      final info = await Navigator.push<ProfileInfo>(context,
-          MaterialPageRoute(builder: (_) => EditInfoScreen(profile: profile)));
+      final info = await Navigator.push<ProfileInfo>(
+        context,
+        MaterialPageRoute(builder: (_) => EditInfoScreen(profile: profile)),
+      );
       if (info != null && mounted) setState(() => profile = info);
       return;
     }
     await Navigator.push<ProfileInfo>(
-        context,
-        MaterialPageRoute(
-            builder: (_) => EditInfoScreen(
-                profile: profile, onSave: repository!.saveProfile)));
+      context,
+      MaterialPageRoute(
+        builder: (_) =>
+            EditInfoScreen(profile: profile, onSave: repository!.saveProfile),
+      ),
+    );
   }
 
   @override
@@ -209,13 +253,11 @@ class _HomeShellState extends State<HomeShell> {
           .toLowerCase()
           .contains(query);
 
-      final matchesCategory = category == 'All'
-          ? true
-          : category == 'Today'
-              ? (opportunity.startsAt == null
-                  ? opportunity.date == 'Today'
-                  : DateUtils.isSameDay(opportunity.startsAt, DateTime.now()))
-              : opportunity.category == category;
+      final matchesCategory = OpportunityFilters.matches(
+        opportunity,
+        categories,
+        DateTime.now(),
+      );
 
       return matchesSearch && matchesCategory;
     }).toList();
@@ -224,48 +266,66 @@ class _HomeShellState extends State<HomeShell> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      bottomNavigationBar: AppBottomNav(
+        index: navIndex,
+        unreadCount: notices.where((n) => !n.read).length,
+        onTap: _onNavigation,
+      ),
       body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: CustomScrollView(
-                slivers: [
-                  SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(AppSpacing.s20,
-                        AppSpacing.s12, AppSpacing.s20, AppSpacing.s100),
-                    sliver: SliverList(
-                      delegate: SliverChildListDelegate([
-                        AppHeader(
-                          isMyPage: navIndex == 4,
-                          area: area,
-                          firstName: profile.firstName,
-                          onArea: _showAreaPicker,
-                        ),
-                        const SizedBox(height: 2),
-                        if (!widget.connected)
-                          const Padding(
-                              padding: EdgeInsets.all(AppSpacing.s8),
-                              child: Text(
-                                  'Preview mode · Firebase is not connected. See FIREBASE_SETUP.md.')),
-                        if (saving || loading) const LinearProgressIndicator(),
-                        if (loadError != null)
-                          Column(children: [
-                            Text(loadError!),
-                            TextButton(
-                                onPressed: () => setState(connect),
-                                child: const Text('Retry'))
-                          ]),
-                        _currentScreen(),
-                      ]),
-                    ),
-                  ),
-                ],
+        bottom: false,
+        child: CustomScrollView(
+          slivers: [
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.s20,
+                AppSpacing.s12,
+                AppSpacing.s20,
+                AppSpacing.s24,
               ),
-            ),
-            AppBottomNav(
-              index: navIndex,
-              unreadCount: notices.where((n) => !n.read).length,
-              onTap: _onNavigation,
+              sliver: SliverList(
+                delegate: SliverChildListDelegate([
+                  AppHeader(
+                    isMyPage: navIndex == 4,
+                    area: area,
+                    firstName: profile.firstName,
+                    onArea: _showAreaPicker,
+                  ),
+                  const SizedBox(height: 2),
+                  if (!widget.connected)
+                    const Padding(
+                      padding: EdgeInsets.all(AppSpacing.s8),
+                      child: Text(
+                        'Preview mode · Firebase is not connected. See FIREBASE_SETUP.md.',
+                      ),
+                    ),
+                  if (saving || loading) const LinearProgressIndicator(),
+                  if (loadError != null)
+                    Column(
+                      children: [
+                        Text(loadError!),
+                        TextButton(
+                          onPressed: () => setState(connect),
+                          child: const Text('Retry'),
+                        ),
+                      ],
+                    ),
+                  if (!widget.signedIn && navIndex != 4)
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton.icon(
+                        onPressed: _signIn,
+                        icon: const Icon(Icons.login),
+                        label: const Text('Sign in'),
+                      ),
+                    ),
+                  if (widget.connected && impactStatus != null)
+                    TextButton(
+                      onPressed: () => setState(connect),
+                      child: const Text('Retry community totals'),
+                    ),
+                  _currentScreen(),
+                ]),
+              ),
             ),
           ],
         ),
@@ -276,34 +336,44 @@ class _HomeShellState extends State<HomeShell> {
   Widget _currentScreen() {
     switch (navIndex) {
       case 1:
-        return MapScreen(
-          opportunities: filtered,
-          area: area,
-          onOpen: _showDetails,
+        return Column(
+          children: [
+            CategoryChips(selected: categories, onSelected: _toggleCategory),
+            MapScreen(
+              opportunities: filtered,
+              area: area,
+              onOpen: _showDetails,
+            ),
+          ],
         );
       case 3:
+        if (!widget.signedIn) {
+          return _loginPanel('Sign in to see your notifications.');
+        }
         return NotificationsScreen(
-            notifications: notices,
-            loading: noticesLoading,
-            onOpen: (notice) {
-              if (widget.connected) {
-                perform(() => repository!.markNotificationRead(notice.id));
-              }
-              final matches =
-                  opportunities.where((e) => e.id == notice.eventId);
-              if (matches.isNotEmpty) {
-                _showDetails(matches.first);
-              } else {
-                ScaffoldMessenger.of(context)
-                    .showSnackBar(SnackBar(content: Text(notice.message)));
-              }
-            });
+          notifications: notices,
+          loading: noticesLoading,
+          onOpen: (notice) {
+            if (widget.connected) {
+              perform(() => repository!.markNotificationRead(notice.id));
+            }
+            final matches = opportunities.where((e) => e.id == notice.eventId);
+            if (matches.isNotEmpty) {
+              _showDetails(matches.first);
+            } else {
+              ScaffoldMessenger.of(context)
+                  .showSnackBar(SnackBar(content: Text(notice.message)));
+            }
+          },
+        );
       case 4:
+        if (!widget.signedIn) return _loginPanel('Sign in to view My Page.');
         return MyPageScreen(
           opportunities: opportunities,
           joined: joined.intersection(opportunities.map((e) => e.id).toSet()),
-          favorites:
-              favorites.intersection(opportunities.map((e) => e.id).toSet()),
+          favorites: favorites.intersection(
+            opportunities.map((e) => e.id).toSet(),
+          ),
           posted: widget.connected
               ? opportunities
                   .where((e) => e.ownerId == repository!.uid)
@@ -324,12 +394,13 @@ class _HomeShellState extends State<HomeShell> {
       default:
         return DiscoverScreen(
           opportunities: filtered,
-          favorites:
-              favorites.intersection(opportunities.map((e) => e.id).toSet()),
-          category: category,
+          favorites: favorites.intersection(
+            opportunities.map((e) => e.id).toSet(),
+          ),
+          categories: categories,
           searchController: searchController,
           onSearch: (_) => setState(() {}),
-          onCategory: (value) => setState(() => category = value),
+          onCategory: _toggleCategory,
           onOpen: _showDetails,
           onFavorite: _toggleFavorite,
           rewards: rewardProgress,
@@ -339,6 +410,66 @@ class _HomeShellState extends State<HomeShell> {
           onRewards: _showRewards,
         );
     }
+  }
+
+  void _toggleCategory(String value) =>
+      setState(() => categories = OpportunityFilters.toggle(categories, value));
+
+  Widget _loginPanel(String message) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 48),
+        child: Column(
+          children: [
+            const Icon(Icons.lock_outline, size: 40, color: AppColors.navy),
+            const SizedBox(height: 16),
+            Text(message, textAlign: TextAlign.center),
+            const SizedBox(height: 16),
+            FilledButton.icon(
+              onPressed: _signIn,
+              icon: const Icon(Icons.login),
+              label: const Text('Sign in'),
+            ),
+          ],
+        ),
+      );
+
+  void _signIn() {
+    if (!widget.connected) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Sign in is unavailable while Firebase is disconnected.',
+          ),
+        ),
+      );
+      return;
+    }
+    Navigator.of(context)
+        .push(MaterialPageRoute(builder: (_) => const AuthScreen()));
+  }
+
+  void _promptSignIn() {
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Sign in to take part'),
+        content: const Text(
+          'Sign in or create an account to save favorites, join an opportunity or post your own.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Keep browsing'),
+          ),
+          FilledButton(
+            onPressed: () {
+              Navigator.pop(dialogContext);
+              _signIn();
+            },
+            child: const Text('Sign in'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _onNavigation(int index) {
@@ -351,96 +482,109 @@ class _HomeShellState extends State<HomeShell> {
 
   void _toggleFavorite(String id) {
     if (!canWrite) return;
-    perform(() =>
-        repository!.setMembership('favorites', id, !favorites.contains(id)));
+    perform(
+      () => repository!.setMembership('favorites', id, !favorites.contains(id)),
+    );
   }
 
   void _showDetails(Opportunity initial) {
     showModalBottomSheet(
-        context: context,
-        isScrollControlled: true,
-        backgroundColor: AppColors.transparent,
-        builder: (_) => StreamBuilder<List<Opportunity>>(
-            stream: widget.connected
-                ? repository!.events()
-                : Stream.value(opportunities),
-            initialData: opportunities,
-            builder: (sheetContext, snapshot) {
-              final item = (snapshot.data ?? [])
-                      .where((e) => e.id == initial.id)
-                      .firstOrNull ??
-                  initial;
-              final owner = widget.connected && item.ownerId == repository!.uid;
-              return OpportunityDetailsSheet(
-                  item: item,
-                  isFavorite: favorites.contains(item.id),
-                  isJoined: joined.contains(item.id),
-                  onAttendees: owner
-                      ? () {
-                          Navigator.pop(sheetContext);
-                          showModalBottomSheet(
-                              context: context,
-                              isScrollControlled: true,
-                              builder: (_) => AttendeesSheet(
-                                  title: item.title,
-                                  attendees: repository!.attendees(item.id)));
-                        }
-                      : null,
-                  onEdit: owner
-                      ? () {
-                          Navigator.pop(sheetContext);
-                          _showPost(item);
-                        }
-                      : null,
-                  onDelete: owner
-                      ? () async {
-                          Navigator.pop(sheetContext);
-                          final confirmed = await showDialog<bool>(
-                              context: context,
-                              builder: (c) => AlertDialog(
-                                      title: const Text('Cancel this event?'),
-                                      content: const Text(
-                                          'It will be removed from Discover and volunteers will receive a notification.'),
-                                      actions: [
-                                        TextButton(
-                                            onPressed: () =>
-                                                Navigator.pop(c, false),
-                                            child: const Text('Keep event')),
-                                        TextButton(
-                                            onPressed: () =>
-                                                Navigator.pop(c, true),
-                                            child: const Text('Cancel event'))
-                                      ]));
-                          if (confirmed == true) {
-                            perform(() => repository!.deleteEvent(item));
-                          }
-                        }
-                      : null,
-                  onFavorite: () {
-                    _toggleFavorite(item.id);
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: AppColors.transparent,
+      builder: (_) => StreamBuilder<List<Opportunity>>(
+        stream: widget.connected
+            ? repository!.events()
+            : Stream.value(opportunities),
+        initialData: opportunities,
+        builder: (sheetContext, snapshot) {
+          final item = (snapshot.data ?? [])
+                  .where((e) => e.id == initial.id)
+                  .firstOrNull ??
+              initial;
+          final owner = widget.signedIn && item.ownerId == repository!.uid;
+          return OpportunityDetailsSheet(
+            item: item,
+            isFavorite: favorites.contains(item.id),
+            isJoined: joined.contains(item.id),
+            onAttendees: owner
+                ? () {
                     Navigator.pop(sheetContext);
-                  },
-                  onJoin: () {
-                    if (canWrite) {
-                      final joining = !joined.contains(item.id);
-                      perform(() => repository!.setAttendance(item.id, joining),
-                          onSuccess: joining
-                              ? () => showJoinConfirmation(context)
-                              : null);
+                    showModalBottomSheet(
+                      context: context,
+                      isScrollControlled: true,
+                      useSafeArea: true,
+                      builder: (_) => AttendeesSheet(
+                        title: item.title,
+                        attendees: repository!.attendees(item.id),
+                      ),
+                    );
+                  }
+                : null,
+            onEdit: owner
+                ? () {
+                    Navigator.pop(sheetContext);
+                    _showPost(item);
+                  }
+                : null,
+            onDelete: owner
+                ? () async {
+                    Navigator.pop(sheetContext);
+                    final confirmed = await showDialog<bool>(
+                      context: context,
+                      builder: (c) => AlertDialog(
+                        title: const Text('Cancel this event?'),
+                        content: const Text(
+                          'It will be removed from Discover and volunteers will receive a notification.',
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(c, false),
+                            child: const Text('Keep event'),
+                          ),
+                          TextButton(
+                            onPressed: () => Navigator.pop(c, true),
+                            child: const Text('Cancel event'),
+                          ),
+                        ],
+                      ),
+                    );
+                    if (confirmed == true) {
+                      perform(() => repository!.deleteEvent(item));
                     }
-                    Navigator.pop(sheetContext);
-                  },
-                  onInvite: () {
-                    Navigator.pop(sheetContext);
-                    _showInvite(item);
-                  });
-            }));
+                  }
+                : null,
+            onFavorite: () {
+              Navigator.pop(sheetContext);
+              _toggleFavorite(item.id);
+            },
+            onJoin: () {
+              Navigator.pop(sheetContext);
+              if (canWrite) {
+                final joining = !joined.contains(item.id);
+                perform(
+                  () => repository!.setAttendance(item.id, joining),
+                  onSuccess:
+                      joining ? () => showJoinConfirmation(context) : null,
+                );
+              }
+            },
+            onInvite: () {
+              Navigator.pop(sheetContext);
+              _showInvite(item);
+            },
+          );
+        },
+      ),
+    );
   }
 
   void _showInvite(Opportunity item) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: AppColors.transparent,
       builder: (_) => InviteSheet(item: item),
     );
@@ -453,6 +597,7 @@ class _HomeShellState extends State<HomeShell> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: AppColors.transparent,
       builder: (_) => RewardsSheet(rewards: rewardProgress),
     );
@@ -462,6 +607,7 @@ class _HomeShellState extends State<HomeShell> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: AppColors.transparent,
       builder: (_) => AreaPickerSheet(
         currentArea: area,
@@ -473,21 +619,27 @@ class _HomeShellState extends State<HomeShell> {
   void _showPost([Opportunity? existing]) {
     if (!canWrite) return;
     showModalBottomSheet(
-        context: context,
-        isScrollControlled: true,
-        backgroundColor: AppColors.transparent,
-        builder: (_) => PostOpportunitySheet(
-            existing: existing,
-            newId: repository!.newEventId,
-            onSave: (event, photo) => repository!
-                .saveEvent(event, photo: photo, update: existing != null),
-            onPublished: (_) {
-              if (mounted) {
-                setState(() {
-                  category = 'All';
-                  navIndex = 0;
-                });
-              }
-            }));
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: AppColors.transparent,
+      builder: (_) => PostOpportunitySheet(
+        existing: existing,
+        newId: repository!.newEventId,
+        onSave: (event, photo) => repository!.saveEvent(
+          event,
+          photo: photo,
+          update: existing != null,
+        ),
+        onPublished: (_) {
+          if (mounted) {
+            setState(() {
+              categories = {'All'};
+              navIndex = 0;
+            });
+          }
+        },
+      ),
+    );
   }
 }

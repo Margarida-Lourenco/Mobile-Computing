@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../theme/app_theme.dart';
 
 class SectionTitle extends StatelessWidget {
@@ -22,23 +23,14 @@ class SectionTitle extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                kicker,
-                style: AppTextStyles.sectionKicker,
-              ),
+              Text(kicker, style: AppTextStyles.sectionKicker),
               const SizedBox(height: 2),
-              Text(
-                title,
-                style: AppTextStyles.statValue,
-              ),
+              Text(title, style: AppTextStyles.statValue),
             ],
           ),
         ),
         if (onAction != null)
-          TextButton(
-            onPressed: onAction,
-            child: const Text('See all'),
-          ),
+          TextButton(onPressed: onAction, child: const Text('See all')),
       ],
     );
   }
