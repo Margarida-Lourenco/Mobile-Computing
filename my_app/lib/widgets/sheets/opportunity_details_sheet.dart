@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../../models/opportunity.dart';
 import '../../theme/app_theme.dart';
 import '../app_sheet.dart';
-import '../icon_box.dart';
 import '../event_photo.dart';
 
 class OpportunityDetailsSheet extends StatelessWidget {
@@ -28,19 +27,12 @@ class OpportunityDetailsSheet extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                IconBox(
-                  icon: item.icon,
-                  color: AppColors.paleGreen,
-                  size: AppIconSizes.s58,
-                ),
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Close'),
-                ),
-              ],
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Close'),
+              ),
             ),
             if (item.coverImageUrl != null)
               EventPhoto(

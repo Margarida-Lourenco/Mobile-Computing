@@ -140,8 +140,19 @@ class _PostOpportunitySheetState extends State<PostOpportunitySheet> {
                         removePhoto = true;
                       }),
                     ),
-                    _field('Opportunity title', title,
-                        'e.g. Pack weekend food bags'),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: AppSpacing.s12),
+                      child: TextField(
+                        controller: title,
+                        minLines: 1,
+                        maxLines: 2,
+                        maxLength: Opportunity.maxTitleLength,
+                        textCapitalization: TextCapitalization.sentences,
+                        decoration: _decoration('Opportunity title').copyWith(
+                          hintText: 'e.g. Pack weekend food bags',
+                        ),
+                      ),
+                    ),
                     _field('Host', organization, 'Your name or organization'),
                     DropdownButtonFormField<String>(
                       initialValue: category,
@@ -366,11 +377,11 @@ class _PostOpportunitySheetState extends State<PostOpportunitySheet> {
       revealSubmitArea();
       return;
     }
-    if (title.text.trim().length > 200 ||
+    if (!Opportunity.isValidTitle(title.text) ||
         description.text.trim().length > 10000) {
       setState(
         () => error =
-            'Keep the title within 200 characters and the description within 10000 characters.',
+            'Keep the title within ${Opportunity.maxTitleLength} characters and the description within 10000 characters.',
       );
       revealSubmitArea();
       return;

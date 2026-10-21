@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../models/opportunity.dart';
 import '../theme/app_theme.dart';
-import 'icon_box.dart';
 import 'event_photo.dart';
 
 class OpportunityCard extends StatelessWidget {
@@ -20,88 +19,110 @@ class OpportunityCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: AppSpacing.s10),
-      padding: const EdgeInsets.all(AppSpacing.s13),
-      decoration: appCardDecoration(),
-      child: Row(
-        children: [
-          if (item.coverImageUrl != null)
-            EventPhoto(reference: item.coverImageUrl!, height: 60, width: 60)
-          else
-            IconBox(
-              icon: item.icon,
-              color: item.id == '2' ? AppColors.paleGreen : AppColors.paleBlue,
-              size: AppIconSizes.s48,
-            ),
-          const SizedBox(width: 13),
-          Expanded(
-            child: InkWell(
-              onTap: onOpen,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    item.organization.toUpperCase(),
-                    style: AppTextStyles.cardKicker,
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    item.cancelled ? '${item.title} · Cancelled' : item.title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTextStyles.cardTitle,
-                  ),
-                  const SizedBox(height: 7),
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.calendar_today_outlined,
-                        size: AppIconSizes.s13,
-                        color: AppColors.muted,
+  Widget build(BuildContext context) => Container(
+        margin: const EdgeInsets.only(bottom: AppSpacing.s10),
+        decoration: appCardDecoration(),
+        child: Material(
+          color: AppColors.white,
+          borderRadius: BorderRadius.circular(AppRadii.r18),
+          clipBehavior: Clip.antiAlias,
+          child: Stack(
+            children: [
+              InkWell(
+                onTap: onOpen,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    AspectRatio(
+                      key: const ValueKey('listing-photo'),
+                      aspectRatio: 16 / 9,
+                      child: item.coverImageUrl != null
+                          ? EventPhoto(
+                              reference: item.coverImageUrl!,
+                              width: double.infinity,
+                              height: double.infinity,
+                            )
+                          : ColoredBox(
+                              color: AppColors.paleBlue,
+                              child: Icon(item.icon,
+                                  size: 48, color: AppColors.darkBlue),
+                            ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(14),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            item.organization.toUpperCase(),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTextStyles.cardKicker,
+                          ),
+                          const SizedBox(height: 5),
+                          Text(
+                            item.title,
+                            softWrap: true,
+                            style: AppTextStyles.cardTitle
+                                .copyWith(fontSize: 18, height: 1.25),
+                          ),
+                          if (item.cancelled) ...[
+                            const SizedBox(height: 4),
+                            const Text('Cancelled',
+                                style: AppTextStyles.formError),
+                          ],
+                          const SizedBox(height: 10),
+                          Wrap(
+                            spacing: 14,
+                            runSpacing: 6,
+                            children: [
+                              _fact(Icons.calendar_today_outlined, item.date),
+                              _fact(Icons.schedule, item.time),
+                            ],
+                          ),
+                          const SizedBox(height: 7),
+                          _fact(
+                            Icons.location_on_outlined,
+                            [
+                              item.place,
+                              if (item.distance.isNotEmpty) item.distance
+                            ].join(' · '),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 4),
-                      Flexible(
-                        child: Text(
-                          item.date,
-                          style: AppTextStyles.captionMuted,
-                        ),
-                      ),
-                      const SizedBox(width: 11),
-                      const Icon(
-                        Icons.schedule,
-                        size: AppIconSizes.s13,
-                        color: AppColors.muted,
-                      ),
-                      const SizedBox(width: 4),
-                      Flexible(
-                        child: Text(
-                          item.time,
-                          style: AppTextStyles.captionMuted,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '${item.place} · ${item.distance}',
-                    style: AppTextStyles.captionMuted,
-                  ),
-                ],
+                    ),
+                  ],
+                ),
               ),
-            ),
+              Positioned(
+                top: 10,
+                right: 10,
+                child: IconButton(
+                  tooltip:
+                      favorite ? 'Remove from favorites' : 'Add to favorites',
+                  isSelected: favorite,
+                  onPressed: onFavorite,
+                  style: IconButton.styleFrom(
+                    minimumSize: const Size(44, 44),
+                    backgroundColor: AppColors.white,
+                    foregroundColor: AppColors.navy,
+                    shape: const CircleBorder(),
+                  ),
+                  icon: Icon(favorite ? Icons.favorite : Icons.favorite_border),
+                ),
+              ),
+            ],
           ),
-          IconButton(
-            onPressed: onFavorite,
-            icon: Icon(
-              favorite ? Icons.favorite : Icons.favorite_border,
-              color: favorite ? AppColors.darkBlue : AppColors.inactiveIcon,
-              size: AppIconSizes.s19,
-            ),
-          ),
+        ),
+      );
+
+  Widget _fact(IconData icon, String text) => Row(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 15, color: AppColors.muted),
+          const SizedBox(width: 5),
+          Flexible(child: Text(text, style: AppTextStyles.captionMuted)),
         ],
-      ),
-    );
-  }
+      );
 }

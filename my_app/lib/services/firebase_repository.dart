@@ -217,6 +217,10 @@ class FirebaseRepository {
     Uint8List? photo,
     bool update = false,
   }) async {
+    if (!Opportunity.isValidTitle(event.title)) {
+      throw StateError(
+          'Use a title with 1–${Opportunity.maxTitleLength} characters.');
+    }
     if (event.startsAt == null ||
         event.endsAt == null ||
         !event.endsAt!.isAfter(event.startsAt!)) {

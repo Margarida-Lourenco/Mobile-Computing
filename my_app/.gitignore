@@ -51,3 +51,9 @@ supabase/.temp/
 supabase/.branches/
 supabase/functions/.env
 supabase/functions/.env.*
+
+# Local administration dependencies and generated demo sign-in details.
+tools/node_modules/
+tools/.seed-validation/
+**/community-demo-logins.json
+**/Community-demo-logins.json

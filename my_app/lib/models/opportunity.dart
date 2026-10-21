@@ -2,6 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Opportunity {
+  static const maxTitleLength = 60;
+
+  static bool isValidTitle(String value) =>
+      value.trim().isNotEmpty &&
+      value.trim().characters.length <= maxTitleLength;
+
   final String id;
   final String ownerId;
   final String? coverImageUrl;
