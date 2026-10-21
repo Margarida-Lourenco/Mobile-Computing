@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../models/opportunity.dart';
+import '../models/opportunity_order.dart';
 import '../models/reward_progress.dart';
 import '../theme/app_theme.dart';
 import '../widgets/empty_state.dart';
@@ -59,15 +60,15 @@ class _MyPageScreenState extends State<MyPageScreen> {
     final allJoined = widget.opportunities
         .where((o) => widget.joined.contains(o.id) && !o.cancelled)
         .toList();
-    final joinedItems = allJoined.where((o) => !o.hasEnded(now)).toList();
+    final joinedItems =
+        OpportunityOrder.byDate(allJoined.where((o) => !o.hasEnded(now)), now);
     final pastItems = allJoined.where((o) => o.hasEnded(now)).toList()
       ..sort((a, b) => b.completionTime!.compareTo(a.completionTime!));
-    final postedItems = widget.opportunities
-        .where((o) => widget.posted.contains(o.id))
-        .toList();
-    final favoriteItems = widget.opportunities
-        .where((o) => widget.favorites.contains(o.id))
-        .toList();
+    final postedItems = OpportunityOrder.byDate(
+        widget.opportunities.where((o) => widget.posted.contains(o.id)), now);
+    final favoriteItems = OpportunityOrder.byDate(
+        widget.opportunities.where((o) => widget.favorites.contains(o.id)),
+        now);
 
     final periodItems = pastShifts ? pastItems : joinedItems;
     final visibleJoined = calendar

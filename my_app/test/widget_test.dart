@@ -138,7 +138,9 @@ void main() {
     expect(find.widgetWithText(FilledButton, 'Sign in'), findsOneWidget);
     await tester.tap(find.byIcon(Icons.home_outlined));
     await tester.pumpAndSettle();
-    await tester.ensureVisible(find.text('Serve warm lunch').first);
+    await Scrollable.ensureVisible(
+        tester.element(find.text('Serve warm lunch').first),
+        alignment: .3);
     await tester.pumpAndSettle();
     await tester.tap(find.text('Serve warm lunch').first);
     await tester.pumpAndSettle();

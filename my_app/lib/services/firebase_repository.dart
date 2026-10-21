@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import '../models/opportunity.dart';
+import '../models/opportunity_order.dart';
 import '../models/app_notification.dart';
 import 'member_registry.dart';
 import 'supabase_images.dart';
@@ -25,21 +26,16 @@ class FirebaseRepository {
     });
   }
 
-  Stream<List<Opportunity>> events() =>
-      db.collection('opportunities').snapshots().map(
-            (s) => s.docs
-                .where(
-                  (d) => (d.data()['cancelled'] != true ||
-                      d.data()['ownerId'] == auth.currentUser?.uid),
-                )
-                .map((d) => Opportunity.fromFirestore(d.id, d.data()))
-                .toList()
-              ..sort(
-                (a, b) => (b.startsAt ?? DateTime(2000)).compareTo(
-                  a.startsAt ?? DateTime(2000),
-                ),
-              ),
-          );
+  Stream<List<Opportunity>> events() => db
+      .collection('opportunities')
+      .snapshots()
+      .map((snapshot) => OpportunityOrder.byDate(
+          snapshot.docs
+              .where((doc) =>
+                  doc.data()['cancelled'] != true ||
+                  doc.data()['ownerId'] == auth.currentUser?.uid)
+              .map((doc) => Opportunity.fromFirestore(doc.id, doc.data())),
+          DateTime.now()));
   Future<void> registerMember() => MemberRegistry.registerMember(db, uid);
 
   Stream<int?> memberCount() => db

@@ -9,13 +9,13 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../services/firebase_repository.dart';
 import '../data/sample_opportunities.dart';
 import '../models/opportunity.dart';
+import '../models/opportunity_order.dart';
 import '../models/reward_progress.dart';
 import '../models/community_impact.dart';
 import '../widgets/join_confirmation.dart';
 import '../widgets/bottom_nav.dart';
 import '../widgets/header.dart';
 import '../widgets/sheets/area_picker_sheet.dart';
-import '../widgets/sheets/invite_sheet.dart';
 import '../widgets/sheets/opportunity_details_sheet.dart';
 import '../widgets/sheets/post_opportunity_sheet.dart';
 import '../widgets/sheets/rewards_sheet.dart';
@@ -43,6 +43,25 @@ class _HomeShellState extends State<HomeShell> {
   FirebaseRepository? repository;
   final List<StreamSubscription<dynamic>> subscriptions = [];
   Timer? clockRefresh;
+  final _scrollController = ScrollController();
+  bool _showBackToTop = false;
+
+  void _updateBackToTop() {
+    final visible =
+        _scrollController.hasClients && _scrollController.offset > 240;
+    if (mounted && visible != _showBackToTop) {
+      setState(() => _showBackToTop = visible);
+    }
+  }
+
+  void _backToTop() {
+    if (_scrollController.hasClients) {
+      _scrollController.animateTo(0,
+          duration: const Duration(milliseconds: 350),
+          curve: Curves.easeOutCubic);
+    }
+  }
+
   bool loading = false, saving = false;
   String? loadError;
   List<AppNotification> notices = [];
@@ -199,6 +218,7 @@ class _HomeShellState extends State<HomeShell> {
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_updateBackToTop);
     if (widget.connected) {
       clockRefresh = Timer.periodic(const Duration(seconds: 30), (_) {
         if (mounted) setState(() {});
@@ -238,29 +258,23 @@ class _HomeShellState extends State<HomeShell> {
       s.cancel();
     }
     clockRefresh?.cancel();
+    _scrollController.dispose();
     searchController.dispose();
     super.dispose();
   }
 
   List<Opportunity> get filtered {
     final query = searchController.text.toLowerCase();
-
-    return opportunities.where((opportunity) {
-      if (!opportunity.isAvailable(DateTime.now())) return false;
-      final matchesSearch = '${opportunity.title} '
-              '${opportunity.organization} '
-              '${opportunity.place}'
-          .toLowerCase()
-          .contains(query);
-
-      final matchesCategory = OpportunityFilters.matches(
-        opportunity,
-        categories,
-        DateTime.now(),
-      );
-
-      return matchesSearch && matchesCategory;
-    }).toList();
+    final now = DateTime.now();
+    return OpportunityOrder.byDate(opportunities.where((opportunity) {
+      if (!opportunity.isAvailable(now)) return false;
+      final matchesSearch =
+          '${opportunity.title} ${opportunity.organization} ${opportunity.place}'
+              .toLowerCase()
+              .contains(query);
+      return matchesSearch &&
+          OpportunityFilters.matches(opportunity, categories, now);
+    }), now);
   }
 
   @override
@@ -273,61 +287,83 @@ class _HomeShellState extends State<HomeShell> {
       ),
       body: SafeArea(
         bottom: false,
-        child: CustomScrollView(
-          slivers: [
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.s20,
-                AppSpacing.s12,
-                AppSpacing.s20,
-                AppSpacing.s24,
-              ),
-              sliver: SliverList(
-                delegate: SliverChildListDelegate([
-                  AppHeader(
-                    isMyPage: navIndex == 4,
-                    showGreeting: navIndex != 3,
-                    area: area,
-                    firstName: profile.firstName,
-                    onArea: _showAreaPicker,
+        child: Stack(
+          children: [
+            CustomScrollView(
+              controller: _scrollController,
+              slivers: [
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.s20,
+                    AppSpacing.s12,
+                    AppSpacing.s20,
+                    AppSpacing.s24,
                   ),
-                  const SizedBox(height: 2),
-                  if (!widget.connected)
-                    const Padding(
-                      padding: EdgeInsets.all(AppSpacing.s8),
-                      child: Text(
-                        'Preview mode · Firebase is not connected. See FIREBASE_SETUP.md.',
+                  sliver: SliverList(
+                    delegate: SliverChildListDelegate([
+                      AppHeader(
+                        isMyPage: navIndex == 4,
+                        showGreeting: navIndex != 3,
+                        area: area,
+                        firstName: profile.firstName,
+                        onArea: _showAreaPicker,
                       ),
-                    ),
-                  if (saving || loading) const LinearProgressIndicator(),
-                  if (loadError != null)
-                    Column(
-                      children: [
-                        Text(loadError!),
+                      const SizedBox(height: 2),
+                      if (!widget.connected)
+                        const Padding(
+                          padding: EdgeInsets.all(AppSpacing.s8),
+                          child: Text(
+                            'Preview mode · Firebase is not connected. See FIREBASE_SETUP.md.',
+                          ),
+                        ),
+                      if (saving || loading) const LinearProgressIndicator(),
+                      if (loadError != null)
+                        Column(
+                          children: [
+                            Text(loadError!),
+                            TextButton(
+                              onPressed: () => setState(connect),
+                              child: const Text('Retry'),
+                            ),
+                          ],
+                        ),
+                      if (!widget.signedIn && navIndex != 4 && navIndex != 0)
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: TextButton.icon(
+                            onPressed: _signIn,
+                            icon: const Icon(Icons.login),
+                            label: const Text('Sign in'),
+                          ),
+                        ),
+                      if (widget.connected && impactStatus != null)
                         TextButton(
                           onPressed: () => setState(connect),
-                          child: const Text('Retry'),
+                          child: const Text('Retry community totals'),
                         ),
-                      ],
-                    ),
-                  if (!widget.signedIn && navIndex != 4 && navIndex != 0)
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: TextButton.icon(
-                        onPressed: _signIn,
-                        icon: const Icon(Icons.login),
-                        label: const Text('Sign in'),
-                      ),
-                    ),
-                  if (widget.connected && impactStatus != null)
-                    TextButton(
-                      onPressed: () => setState(connect),
-                      child: const Text('Retry community totals'),
-                    ),
-                  _currentScreen(),
-                ]),
-              ),
+                      _currentScreen(),
+                    ]),
+                  ),
+                ),
+              ],
             ),
+            if (_showBackToTop)
+              Positioned(
+                top: 12,
+                left: 0,
+                right: 0,
+                child: Align(
+                  alignment: Alignment.topCenter,
+                  child: FloatingActionButton.small(
+                    heroTag: 'back-to-top',
+                    tooltip: 'Back to top',
+                    backgroundColor: AppColors.white,
+                    foregroundColor: AppColors.navy,
+                    onPressed: _backToTop,
+                    child: const Icon(Icons.arrow_upward),
+                  ),
+                ),
+              ),
           ],
         ),
       ),
@@ -572,22 +608,11 @@ class _HomeShellState extends State<HomeShell> {
               }
             },
             onInvite: () {
-              Navigator.pop(sheetContext);
-              _showInvite(item);
+              showCopiedLinkConfirmation(sheetContext);
             },
           );
         },
       ),
-    );
-  }
-
-  void _showInvite(Opportunity item) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      backgroundColor: AppColors.transparent,
-      builder: (_) => InviteSheet(item: item),
     );
   }
 
