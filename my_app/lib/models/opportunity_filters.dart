@@ -11,6 +11,7 @@ class OpportunityFilters {
     'Education',
     'Culture',
     'Sports',
+    'Other',
   ];
   static const labels = ['All', 'Today', ...categories];
   static Set<String> toggle(Set<String> selected, String value) {

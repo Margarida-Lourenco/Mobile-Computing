@@ -46,9 +46,7 @@ Future<void> editor(
       home: Scaffold(
         body: Builder(
           builder: (context) => TextButton(
-            onPressed: () => showModalBottomSheet(
-              context: context,
-              isScrollControlled: true,
+            onPressed: () => Navigator.of(context).push(MaterialPageRoute(
               builder: (_) => PostOpportunitySheet(
                 existing: item,
                 onSave: (e, photo) async {
@@ -56,7 +54,7 @@ Future<void> editor(
                 },
                 onPublished: (_) {},
               ),
-            ),
+            )),
             child: const Text('Open'),
           ),
         ),
@@ -205,8 +203,8 @@ void main() {
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
       expect(find.byType(SegmentedButton<String>), findsNothing);
-      await tester.ensureVisible(find.text('Agenda'));
-      await tester.tap(find.text('Agenda'));
+      await tester.ensureVisible(find.byTooltip('Agenda'));
+      await tester.tap(find.byTooltip('Agenda'));
       await tester.pumpAndSettle();
       expect(find.text('Event 7'), findsOneWidget);
       expect(tester.takeException(), isNull);

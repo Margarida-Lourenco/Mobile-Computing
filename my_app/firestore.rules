@@ -13,7 +13,7 @@ service cloud.firestore {
       return d.keys().hasOnly(['organization','title','date','time','place','distance','category','description','spots','latitude','longitude','ownerId','coverImageUrl','imageUrls','startsAt','endsAt','createdAt','updatedAt','attendeeCount','attendanceRevision','cancelled','lastActorId','lastAction'])
         && d.ownerId is string && d.title is string && d.title.size() > 0 && d.title.size() <= 200
         && d.organization is string && d.place is string && d.description is string && d.description.size() <= 10000
-        && d.category in ['Community','Food','Social','Outdoors','Animals','Housework','Education','Culture','Sports']
+        && d.category in ['Community','Food','Social','Outdoors','Animals','Housework','Education','Culture','Sports','Other']
         && d.spots is int && d.spots > 0 && d.spots <= 10000
         && d.get('attendeeCount',0) is int && d.get('attendeeCount',0) >= 0 && d.get('attendeeCount',0) <= d.spots
         && d.latitude is number && d.latitude >= -90 && d.latitude <= 90

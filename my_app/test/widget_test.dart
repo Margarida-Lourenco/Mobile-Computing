@@ -162,7 +162,7 @@ void main() {
       ),
     );
     await tester.pump();
-    final marker = find.byTooltip('Serve warm lunch');
+    final marker = find.byTooltip('Serve warm lunch · Community');
     expect(tester.getSize(marker).width, greaterThanOrEqualTo(44));
     expect(tester.getSize(marker).height, greaterThanOrEqualTo(44));
     await tester.tap(marker);

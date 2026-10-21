@@ -4,18 +4,12 @@ import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../models/opportunity.dart';
+import '../data/city_areas.dart';
 import '../theme/app_theme.dart';
+import '../theme/category_style.dart';
 import '../widgets/section_title.dart';
 
-const gothenburg = LatLng(57.7007, 11.9680);
-const areaCenters = <String, LatLng>{
-  'Majorna': LatLng(57.6952, 11.9187),
-  'Centrum': gothenburg,
-  'Hisingen': LatLng(57.7210, 11.9432),
-  'Linné': LatLng(57.6969, 11.9528),
-  'Haga': LatLng(57.6987, 11.9555),
-  'Kvillebäcken': LatLng(57.7225, 11.9465),
-};
+export '../data/city_areas.dart' show gothenburg;
 
 class MapScreen extends StatefulWidget {
   final List<Opportunity> opportunities;
@@ -45,7 +39,8 @@ class _MapScreenState extends State<MapScreen> {
     if (widget.area != oldWidget.area) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
-          controller.move(areaCenters[widget.area] ?? gothenburg, 12.5);
+          controller.move(
+              areaCenters[widget.area] ?? gothenburg, areaZoom(widget.area));
         }
       });
     }
@@ -155,7 +150,7 @@ class _MapScreenState extends State<MapScreen> {
                   mapController: controller,
                   options: MapOptions(
                     initialCenter: areaCenters[widget.area] ?? gothenburg,
-                    initialZoom: 12.5,
+                    initialZoom: areaZoom(widget.area),
                   ),
                   children: [
                     TileLayer(
@@ -172,11 +167,17 @@ class _MapScreenState extends State<MapScreen> {
                               width: selectedId == item.id ? 64 : 48,
                               height: selectedId == item.id ? 64 : 48,
                               child: IconButton.filled(
-                                tooltip: item.title,
+                                tooltip: '${item.title} · ${item.category}',
                                 style: IconButton.styleFrom(
-                                  backgroundColor: selectedId == item.id
-                                      ? AppColors.darkBlue
-                                      : AppColors.navy,
+                                  backgroundColor: CategoryStyle.forCategory(
+                                    item.category,
+                                  ).color,
+                                  side: selectedId == item.id
+                                      ? const BorderSide(
+                                          color: AppColors.white,
+                                          width: 3,
+                                        )
+                                      : BorderSide.none,
                                   foregroundColor: AppColors.white,
                                 ),
                                 onPressed: () {
@@ -184,7 +185,7 @@ class _MapScreenState extends State<MapScreen> {
                                   widget.onOpen(item);
                                 },
                                 icon: Icon(
-                                  item.icon,
+                                  CategoryStyle.forCategory(item.category).icon,
                                   size: selectedId == item.id ? 32 : 24,
                                 ),
                               ),
@@ -256,7 +257,10 @@ class _MapScreenState extends State<MapScreen> {
             child: ListTile(
               selected: selectedId == item.id,
               selectedTileColor: AppColors.paleGreen,
-              leading: Icon(item.icon, color: AppColors.navy),
+              leading: Icon(
+                CategoryStyle.forCategory(item.category).icon,
+                color: CategoryStyle.forCategory(item.category).color,
+              ),
               title: Text(item.title),
               subtitle: Text(
                 '${item.date} · ${item.time}\n${item.place}${item.latitude == null || item.longitude == null ? ' · No map pin' : ''}',

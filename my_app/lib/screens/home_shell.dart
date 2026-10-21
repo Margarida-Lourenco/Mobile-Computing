@@ -286,6 +286,7 @@ class _HomeShellState extends State<HomeShell> {
                 delegate: SliverChildListDelegate([
                   AppHeader(
                     isMyPage: navIndex == 4,
+                    showGreeting: navIndex != 3,
                     area: area,
                     firstName: profile.firstName,
                     onArea: _showAreaPicker,
@@ -309,7 +310,7 @@ class _HomeShellState extends State<HomeShell> {
                         ),
                       ],
                     ),
-                  if (!widget.signedIn && navIndex != 4)
+                  if (!widget.signedIn && navIndex != 4 && navIndex != 0)
                     Align(
                       alignment: Alignment.centerRight,
                       child: TextButton.icon(
@@ -618,11 +619,7 @@ class _HomeShellState extends State<HomeShell> {
 
   void _showPost([Opportunity? existing]) {
     if (!canWrite) return;
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      backgroundColor: AppColors.transparent,
+    Navigator.of(context).push<void>(MaterialPageRoute(
       builder: (_) => PostOpportunitySheet(
         existing: existing,
         newId: repository!.newEventId,
@@ -640,6 +637,6 @@ class _HomeShellState extends State<HomeShell> {
           }
         },
       ),
-    );
+    ));
   }
 }

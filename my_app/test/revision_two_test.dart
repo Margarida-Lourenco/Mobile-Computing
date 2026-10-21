@@ -77,7 +77,7 @@ void main() {
       expect(find.text('LEVEL 2 · KIND NEIGHBOR'), findsOneWidget);
     },
   );
-  testWidgets('Past shifts sits beside Calendar and Agenda at phone width', (
+  testWidgets('Period switch sits beside Calendar and Agenda at phone width', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(320, 800);
@@ -85,12 +85,12 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
     await tester.pumpWidget(myPage([], {}));
-    final agenda = tester.getCenter(find.text('Agenda'));
-    final calendar = tester.getCenter(find.text('Calendar'));
-    final past = tester.getCenter(find.text('Past shifts'));
+    final agenda = tester.getCenter(find.byTooltip('Agenda'));
+    final calendar = tester.getCenter(find.byTooltip('Calendar'));
+    final past = tester.getCenter(find.text('Past'));
     expect(past.dy, closeTo(calendar.dy, 1));
     expect(agenda.dy, closeTo(calendar.dy, 1));
-    expect(past.dx, greaterThan(calendar.dx));
+    expect(past.dx, lessThan(agenda.dx));
     expect(tester.takeException(), isNull);
   });
   testWidgets('Notifications label stays on one line on a narrow phone', (
@@ -181,8 +181,8 @@ void main() {
           ),
         ),
       );
-      expect(find.text('7.5\nhours shared'), findsOneWidget);
-      expect(find.text('3\nmembers'), findsOneWidget);
+      expect(find.text('7.5'), findsOneWidget);
+      expect(find.text('3'), findsOneWidget);
       expect(find.text('428\nhours shared'), findsNothing);
     },
   );

@@ -72,7 +72,7 @@ try {
   await assertFails(getDocs(collection(guest,'opportunities/event/attendees')));
  });
  await check('all new posting categories are accepted',async()=>{
-  for(const category of ['Social','Outdoors','Animals','Housework','Education','Culture','Sports'])
+  for(const category of ['Social','Outdoors','Animals','Housework','Education','Culture','Sports','Other'])
    await assertSucceeds(setDoc(doc(host,'opportunities/category-'+category),{...eventData,category,createdAt:serverTimestamp(),updatedAt:serverTimestamp()}));
  });
  await check('host can create event with zero attendance',()=>assertSucceeds(setDoc(doc(host,'opportunities/new'),{...eventData,createdAt:serverTimestamp(),updatedAt:serverTimestamp()})));

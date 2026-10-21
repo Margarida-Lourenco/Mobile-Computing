@@ -4,6 +4,7 @@ import '../theme/app_theme.dart';
 
 class AppHeader extends StatelessWidget {
   final bool isMyPage;
+  final bool showGreeting;
   final String area;
   final String firstName;
   final VoidCallback onArea;
@@ -11,6 +12,7 @@ class AppHeader extends StatelessWidget {
   const AppHeader({
     super.key,
     required this.isMyPage,
+    this.showGreeting = true,
     required this.area,
     required this.firstName,
     required this.onArea,
@@ -28,12 +30,13 @@ class AppHeader extends StatelessWidget {
                 'Göod Together',
                 style: AppTextStyles.captionAccentBold,
               ),
-              Text(
-                isMyPage ? 'My Page' : 'Hej, $firstName',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: AppTextStyles.greeting,
-              ),
+              if (showGreeting)
+                Text(
+                  isMyPage ? 'My Page' : 'Hej, $firstName',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.greeting,
+                ),
             ],
           ),
         ),

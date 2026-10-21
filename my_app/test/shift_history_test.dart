@@ -6,6 +6,7 @@ import 'package:good_together/screens/my_page_screen.dart';
 import 'package:good_together/screens/edit_info_screen.dart';
 import 'package:good_together/widgets/bottom_nav.dart';
 import 'package:good_together/widgets/opportunity_card.dart';
+import 'package:good_together/widgets/event_calendar.dart';
 
 Opportunity shift(
   String id, {
@@ -143,10 +144,10 @@ void main() {
           ),
         ),
       );
-      expect(find.text('My shifts (1)'), findsOneWidget);
+      expect(find.text('My shifts'), findsOneWidget);
       expect(find.text('LEVEL 1 · NEW NEIGHBOR'), findsOneWidget);
-      await tester.ensureVisible(find.text('Past shifts'));
-      await tester.tap(find.text('Past shifts'));
+      await tester.ensureVisible(find.text('Past'));
+      await tester.tap(find.text('Past'));
       await tester.pump();
       expect(
         tester
@@ -154,8 +155,25 @@ void main() {
             .map((c) => c.item.id),
         ['Past shift'],
       );
-      await tester.ensureVisible(find.text('Agenda'));
-      await tester.tap(find.text('Agenda'));
+      await tester.tap(find.byTooltip('Calendar'));
+      await tester.pump();
+      expect(
+          tester
+              .widget<EventCalendar>(find.byType(EventCalendar))
+              .events
+              .map((event) => event.id),
+          ['Past shift']);
+      await tester.tap(find.byTooltip('Agenda'));
+      await tester.pump();
+      expect(
+          tester
+              .widgetList<OpportunityCard>(find.byType(OpportunityCard))
+              .map((card) => card.item.id),
+          ['Past shift']);
+      await tester.tap(find.text('Upcoming'));
+      await tester.pump();
+      await tester.ensureVisible(find.byTooltip('Agenda'));
+      await tester.tap(find.byTooltip('Agenda'));
       await tester.pump();
       expect(
         tester

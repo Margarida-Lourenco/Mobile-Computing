@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 
 import '../../theme/app_theme.dart';
+import '../../data/city_areas.dart';
 import '../app_sheet.dart';
 import '../icon_box.dart';
 import '../small_kicker.dart';
 
-class AreaPickerSheet extends StatelessWidget {
+class AreaPickerSheet extends StatefulWidget {
   final String currentArea;
   final ValueChanged<String> onSelected;
 
@@ -16,15 +17,23 @@ class AreaPickerSheet extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    const areas = {
-      'Majorna': 'West · parks and community spaces',
-      'Linné': 'Central · social and food initiatives',
-      'Haga': 'Central · local neighborhood projects',
-      'Centrum': 'City center · the widest selection',
-      'Kvillebäcken': 'Hisingen · growing local community',
-    };
+  State<AreaPickerSheet> createState() => _AreaPickerSheetState();
+}
 
+class _AreaPickerSheetState extends State<AreaPickerSheet> {
+  String query = '';
+
+  String normalize(String value) => value
+      .toLowerCase()
+      .replaceAll('å', 'a')
+      .replaceAll('ä', 'a')
+      .replaceAll('ö', 'o');
+
+  @override
+  Widget build(BuildContext context) {
+    final areas = areaCenters.keys.where(
+      (name) => normalize(name).contains(normalize(query.trim())),
+    );
     return AppSheet(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -42,10 +51,19 @@ class AreaPickerSheet extends StatelessWidget {
             style: AppTextStyles.bodyMuted,
           ),
           const SizedBox(height: 15),
-          ...areas.entries.map(
-            (entry) => ListTile(
+          TextField(
+            decoration: const InputDecoration(
+              labelText: 'Search areas',
+              prefixIcon: Icon(Icons.search),
+            ),
+            onChanged: (value) => setState(() => query = value),
+          ),
+          const SizedBox(height: 12),
+          if (areas.isEmpty) const Text('No areas match your search.'),
+          ...areas.map(
+            (area) => ListTile(
               onTap: () {
-                onSelected(entry.key);
+                widget.onSelected(area);
                 Navigator.pop(context);
               },
               contentPadding: EdgeInsets.zero,
@@ -54,13 +72,12 @@ class AreaPickerSheet extends StatelessWidget {
                 color: AppColors.paleGreen,
                 size: AppIconSizes.s42,
               ),
-              title: Text(entry.key, style: AppTextStyles.bodyBold),
-              subtitle: Text(entry.value, style: AppTextStyles.caption),
+              title: Text(area, style: AppTextStyles.bodyBold),
               trailing: Icon(
-                currentArea == entry.key
+                widget.currentArea == area
                     ? Icons.check_circle
                     : Icons.radio_button_unchecked,
-                color: currentArea == entry.key
+                color: widget.currentArea == area
                     ? AppColors.darkBlue
                     : AppColors.muted,
               ),

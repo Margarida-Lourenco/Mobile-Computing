@@ -103,50 +103,31 @@ class DiscoverScreen extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.s10,
-                  vertical: AppSpacing.s6,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.white.withValues(alpha: .55),
-                  borderRadius: BorderRadius.circular(AppRadii.r20),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(
-                      AppIcons.badge,
-                      size: AppIconSizes.s14,
-                      color: AppColors.darkBlue,
-                    ),
-                    const SizedBox(width: 5),
-                    Flexible(
-                      child: Text(
-                        '${communityImpact?.month ?? 'THIS MONTH'} · IMPACT',
-                        style: AppTextStyles.captionAccentBold,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 12),
               const Text(
                 'Gothenburg is showing up.',
                 style: AppTextStyles.heroTitle,
               ),
-              const SizedBox(height: 9),
-              Wrap(
-                spacing: 15,
-                runSpacing: 8,
+              const SizedBox(height: 4),
+              Text(
+                '${_monthName(DateTime.now().month)} - stats',
+                style: AppTextStyles.captionBold,
+              ),
+              const SizedBox(height: 12),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    '${communityImpact?.hours.toStringAsFixed(1) ?? '—'}\nhours shared',
-                    style: AppTextStyles.captionMuted,
+                  Expanded(
+                    child: _stat(
+                      communityImpact?.hours.toStringAsFixed(1) ?? '—',
+                      'hours shared',
+                    ),
                   ),
-                  Text(
-                    '${communityImpact?.accounts ?? '—'}\nmembers',
-                    style: AppTextStyles.captionMuted,
+                  const SizedBox(width: 15),
+                  Expanded(
+                    child: _stat(
+                      '${communityImpact?.accounts ?? '—'}',
+                      'members',
+                    ),
                   ),
                 ],
               ),
@@ -174,6 +155,36 @@ class DiscoverScreen extends StatelessWidget {
       ),
     );
   }
+
+  String _monthName(int month) => const [
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
+  ][month - 1];
+
+  Widget _stat(String value, String label) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        value,
+        style: const TextStyle(
+          fontSize: 30,
+          fontWeight: FontWeight.w900,
+          color: AppColors.navy,
+        ),
+      ),
+      Text(label, style: AppTextStyles.bodyMuted),
+    ],
+  );
 
   Widget _contributionCard() {
     return InkWell(

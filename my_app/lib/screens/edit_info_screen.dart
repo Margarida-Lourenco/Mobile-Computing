@@ -111,6 +111,7 @@ class _EditInfoScreenState extends State<EditInfoScreen> {
                 ),
                 const SizedBox(height: 24),
                 PhotoEditor(
+                  circular: true,
                   label: 'Choose profile picture',
                   busy: busy,
                   reference: removePhoto ? null : widget.profile.imageUrl,

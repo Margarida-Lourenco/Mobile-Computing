@@ -45,7 +45,7 @@ class MyPageScreen extends StatefulWidget {
 class _MyPageScreenState extends State<MyPageScreen> {
   String activityTab = 'My shifts';
   bool pastShifts = false;
-  bool calendar = true;
+  bool calendar = false;
   DateTime selectedDate = DateTime.now();
 
   @override
@@ -69,17 +69,14 @@ class _MyPageScreenState extends State<MyPageScreen> {
         .where((o) => widget.favorites.contains(o.id))
         .toList();
 
-    final visibleJoined = pastShifts
-        ? pastItems
-        : calendar
-            ? joinedItems
-                .where(
-                  (e) =>
-                      e.startsAt != null &&
-                      DateUtils.isSameDay(e.startsAt, selectedDate),
-                )
-                .toList()
-            : joinedItems;
+    final periodItems = pastShifts ? pastItems : joinedItems;
+    final visibleJoined = calendar
+        ? periodItems
+            .where((e) =>
+                e.startsAt != null &&
+                DateUtils.isSameDay(e.startsAt, selectedDate))
+            .toList()
+        : periodItems;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -172,118 +169,94 @@ class _MyPageScreenState extends State<MyPageScreen> {
         const SizedBox(height: 26),
         const SectionTitle(kicker: 'YOUR COMMITMENTS', title: 'Your activity'),
         const SizedBox(height: 12),
-        LayoutBuilder(
-          builder: (context, constraints) => Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: ['My shifts', 'Posted', 'Favorites']
-                .map(
-                  (tab) => SizedBox(
-                    width: constraints.maxWidth < 300
-                        ? constraints.maxWidth
-                        : (constraints.maxWidth - 16) / 3,
-                    child: TextButton(
-                      style: TextButton.styleFrom(
-                        backgroundColor: activityTab == tab
-                            ? AppColors.navy
-                            : AppColors.white,
-                        foregroundColor: activityTab == tab
-                            ? AppColors.white
-                            : AppColors.navy,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppRadii.r12),
-                        ),
-                      ),
-                      onPressed: () => setState(() => activityTab = tab),
-                      child: Text(
-                        '$tab (${tab == 'My shifts' ? joinedItems.length : tab == 'Posted' ? postedItems.length : favoriteItems.length})',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ),
-                )
-                .toList(),
+        Container(
+          decoration: const BoxDecoration(
+            border: Border(bottom: BorderSide(color: AppColors.border)),
           ),
+          child: Row(children: [
+            _activityTab('My shifts', joinedItems.length),
+            _activityTab('Posted', postedItems.length),
+            _activityTab('Favorites', favoriteItems.length),
+          ]),
         ),
         if (activityTab == 'My shifts') ...[
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              Expanded(
-                child: _viewTab(
-                  'Agenda',
-                  Icons.view_agenda_outlined,
-                  !calendar && !pastShifts,
-                  () => setState(() {
-                    calendar = false;
-                    pastShifts = false;
-                  }),
-                ),
+          const SizedBox(height: 12),
+          Row(children: [
+            Expanded(
+                child: Container(
+              padding: const EdgeInsets.all(3),
+              decoration: BoxDecoration(
+                color: AppColors.paleBlue,
+                borderRadius: BorderRadius.circular(12),
               ),
-              Expanded(
-                child: _viewTab(
-                  'Calendar',
-                  Icons.calendar_month_outlined,
-                  calendar && !pastShifts,
-                  () => setState(() {
-                    calendar = true;
-                    pastShifts = false;
-                  }),
-                ),
+              child: Row(children: [
+                _periodTab('Upcoming', !pastShifts,
+                    () => _setPeriod(false, joinedItems)),
+                _periodTab(
+                    'Past', pastShifts, () => _setPeriod(true, pastItems)),
+              ]),
+            )),
+            const SizedBox(width: 12),
+            Container(
+              decoration: BoxDecoration(
+                color: AppColors.white,
+                border: Border.all(color: AppColors.chipBorder),
+                borderRadius: BorderRadius.circular(12),
               ),
-              Expanded(
-                child: _viewTab(
-                  'Past shifts',
-                  Icons.history,
-                  pastShifts,
-                  () => setState(() => pastShifts = true),
-                ),
-              ),
-            ],
-          ),
-          if (calendar && !pastShifts)
+              clipBehavior: Clip.antiAlias,
+              child: Row(children: [
+                _viewButton('Agenda', Icons.view_agenda_outlined, !calendar,
+                    () => setState(() => calendar = false)),
+                _viewButton('Calendar', Icons.calendar_month_outlined, calendar,
+                    () => setState(() => calendar = true)),
+              ]),
+            ),
+          ]),
+          if (calendar)
             EventCalendar(
+              key: ValueKey(pastShifts),
               selectedDate: selectedDate,
-              events: joinedItems,
+              events: periodItems,
               onSelected: (date) => setState(() => selectedDate = date),
             ),
           const SizedBox(height: 18),
-          Row(
-            children: [
-              Container(
-                width: 43,
-                height: 43,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: AppColors.paleGreen,
-                  borderRadius: BorderRadius.circular(AppRadii.r13),
+          if (visibleJoined.isNotEmpty)
+            Row(
+              children: [
+                Container(
+                  width: 43,
+                  height: 43,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: AppColors.paleGreen,
+                    borderRadius: BorderRadius.circular(AppRadii.r13),
+                  ),
+                  child: Text(
+                    '${selectedDate.day}',
+                    style: AppTextStyles.calendarDay,
+                  ),
                 ),
-                child: Text(
-                  '${selectedDate.day}',
-                  style: AppTextStyles.calendarDay,
+                const SizedBox(width: 11),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        pastShifts
+                            ? '${visibleJoined.length} past shifts'
+                            : !calendar
+                                ? '${visibleJoined.length} upcoming shifts'
+                                : '${selectedDate.day} ${_month(selectedDate.month)} ${selectedDate.year} · ${visibleJoined.length} shifts',
+                        maxLines: 2,
+                        style: AppTextStyles.bodyBold,
+                      ),
+                      const Text('Gothenburg',
+                          style: AppTextStyles.captionMuted),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(width: 11),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      pastShifts
-                          ? '${visibleJoined.length} past shifts'
-                          : !calendar
-                              ? '${visibleJoined.length} upcoming shifts'
-                              : '${selectedDate.day} ${_month(selectedDate.month)} ${selectedDate.year} · ${visibleJoined.length} shifts',
-                      maxLines: 2,
-                      style: AppTextStyles.bodyBold,
-                    ),
-                    const Text('Gothenburg', style: AppTextStyles.captionMuted),
-                  ],
-                ),
-              ),
-            ],
-          ),
+              ],
+            ),
           const SizedBox(height: 10),
           ...visibleJoined.map(_card),
           if (visibleJoined.isEmpty)
@@ -315,7 +288,8 @@ class _MyPageScreenState extends State<MyPageScreen> {
         const SizedBox(height: 28),
         SizedBox(
           width: double.infinity,
-          child: OutlinedButton.icon(
+          child: TextButton.icon(
+            style: TextButton.styleFrom(foregroundColor: AppColors.muted),
             onPressed: widget.onSignOut,
             icon: const Icon(Icons.logout),
             label: const Text('Sign out'),
@@ -325,39 +299,87 @@ class _MyPageScreenState extends State<MyPageScreen> {
     );
   }
 
-  Widget _viewTab(
-    String label,
-    IconData icon,
-    bool selected,
-    VoidCallback onTap,
-  ) {
-    return TextButton(
-      onPressed: onTap,
-      style: TextButton.styleFrom(
-        padding: const EdgeInsets.symmetric(horizontal: 4),
-        foregroundColor: selected ? AppColors.navy : AppColors.muted,
-      ),
-      child: FittedBox(
-        fit: BoxFit.scaleDown,
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 16),
-            const SizedBox(width: 4),
-            Text(
-              label,
-              maxLines: 1,
-              softWrap: false,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+  Widget _activityTab(String label, int count) => Expanded(
+        child: Semantics(
+          selected: activityTab == label,
+          child: Container(
+            decoration: BoxDecoration(
+                border: Border(
+                    bottom: BorderSide(
+              width: 3,
+              color: activityTab == label ? AppColors.navy : Colors.transparent,
+            ))),
+            child: TextButton(
+              style: TextButton.styleFrom(
+                minimumSize: const Size(44, 48),
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                foregroundColor:
+                    activityTab == label ? AppColors.navy : AppColors.muted,
+                shape: const RoundedRectangleBorder(),
               ),
+              onPressed: () => setState(() => activityTab = label),
+              child: FittedBox(
+                  child: Row(children: [
+                Text(label),
+                const SizedBox(width: 5),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                      color: AppColors.paleBlue,
+                      borderRadius: BorderRadius.circular(10)),
+                  child: Text('$count', style: AppTextStyles.captionNavy),
+                ),
+              ])),
             ),
-          ],
+          ),
         ),
-      ),
-    );
-  }
+      );
+
+  void _setPeriod(bool past, List<Opportunity> events) => setState(() {
+        pastShifts = past;
+        selectedDate =
+            events.where((e) => e.startsAt != null).firstOrNull?.startsAt ??
+                DateTime.now();
+      });
+
+  Widget _periodTab(String label, bool selected, VoidCallback onTap) =>
+      Expanded(
+        child: Semantics(
+          selected: selected,
+          child: TextButton(
+            onPressed: onTap,
+            style: TextButton.styleFrom(
+              minimumSize: const Size(44, 44),
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              foregroundColor: selected ? AppColors.navy : AppColors.muted,
+              backgroundColor: selected ? AppColors.white : Colors.transparent,
+              side: BorderSide(
+                  color: selected ? AppColors.chipBorder : Colors.transparent),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
+            ),
+            child: FittedBox(child: Text(label)),
+          ),
+        ),
+      );
+
+  Widget _viewButton(
+          String label, IconData icon, bool selected, VoidCallback onTap) =>
+      Semantics(
+        selected: selected,
+        child: IconButton(
+          tooltip: label,
+          onPressed: onTap,
+          style: IconButton.styleFrom(
+            minimumSize: const Size(48, 48),
+            backgroundColor: selected ? AppColors.navy : AppColors.white,
+            foregroundColor: selected ? AppColors.white : AppColors.muted,
+            shape: const RoundedRectangleBorder(),
+          ),
+          icon: Icon(icon),
+        ),
+      );
 
   Widget _card(Opportunity opportunity) {
     return OpportunityCard(

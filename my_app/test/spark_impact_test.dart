@@ -109,7 +109,10 @@ void main() {
         ),
       ),
     );
-    expect(find.text('Choose profile picture'), findsOneWidget);
+    expect(find.byTooltip('Add profile picture'), findsOneWidget);
+    expect(tester.getSize(find.byKey(const ValueKey('profile-photo-circle'))),
+        const Size(120, 120));
+    expect(find.byIcon(Icons.add), findsOneWidget);
     expect(find.byIcon(Icons.photo), findsNothing);
     expect(find.widgetWithText(TextFormField, 'Name'), findsOneWidget);
   });

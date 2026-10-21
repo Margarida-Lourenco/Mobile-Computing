@@ -35,15 +35,13 @@ Future<void> openForm(
       home: Scaffold(
         body: Builder(
           builder: (context) => TextButton(
-            onPressed: () => showModalBottomSheet(
-              context: context,
-              isScrollControlled: true,
+            onPressed: () => Navigator.of(context).push(MaterialPageRoute(
               builder: (_) => PostOpportunitySheet(
                 existing: existing,
                 onSave: (_, photo) => save(),
                 onPublished: (_) => published(),
               ),
-            ),
+            )),
             child: const Text('Open'),
           ),
         ),
