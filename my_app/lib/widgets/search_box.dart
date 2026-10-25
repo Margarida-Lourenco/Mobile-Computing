@@ -24,8 +24,11 @@ class SearchBox extends StatelessWidget {
       child: TextField(
         controller: controller,
         onChanged: onChanged,
+        textAlignVertical: TextAlignVertical.center,
         decoration: const InputDecoration(
           border: InputBorder.none,
+          isDense: true,
+          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
           prefixIcon: Icon(Icons.search, color: AppColors.muted),
           hintText: 'What would you like to help with?',
           hintStyle: AppTextStyles.captionMuted,

@@ -47,8 +47,10 @@ class _HomeShellState extends State<HomeShell> {
   bool _showBackToTop = false;
 
   void _updateBackToTop() {
-    final visible =
-        _scrollController.hasClients && _scrollController.offset > 240;
+    final visible = _scrollController.hasClients &&
+        _scrollController.position.viewportDimension > 0 &&
+        _scrollController.offset >=
+            _scrollController.position.viewportDimension;
     if (mounted && visible != _showBackToTop) {
       setState(() => _showBackToTop = visible);
     }

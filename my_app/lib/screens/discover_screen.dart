@@ -60,10 +60,9 @@ class DiscoverScreen extends StatelessWidget {
         const SizedBox(height: 11),
         _contributionCard(),
         const SizedBox(height: 24),
-        SectionTitle(
+        const SectionTitle(
           kicker: 'MAKE AN IMPACT',
           title: 'Opportunities near you',
-          onAction: () => onCategory('All'),
         ),
         const SizedBox(height: 13),
         ...opportunities.map(
@@ -157,34 +156,34 @@ class DiscoverScreen extends StatelessWidget {
   }
 
   String _monthName(int month) => const [
-    'January',
-    'February',
-    'March',
-    'April',
-    'May',
-    'June',
-    'July',
-    'August',
-    'September',
-    'October',
-    'November',
-    'December',
-  ][month - 1];
+        'January',
+        'February',
+        'March',
+        'April',
+        'May',
+        'June',
+        'July',
+        'August',
+        'September',
+        'October',
+        'November',
+        'December',
+      ][month - 1];
 
   Widget _stat(String value, String label) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Text(
-        value,
-        style: const TextStyle(
-          fontSize: 30,
-          fontWeight: FontWeight.w900,
-          color: AppColors.navy,
-        ),
-      ),
-      Text(label, style: AppTextStyles.bodyMuted),
-    ],
-  );
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 30,
+              fontWeight: FontWeight.w900,
+              color: AppColors.navy,
+            ),
+          ),
+          Text(label, style: AppTextStyles.bodyMuted),
+        ],
+      );
 
   Widget _contributionCard() {
     return InkWell(

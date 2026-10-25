@@ -125,20 +125,23 @@ class _PostOpportunitySheetState extends State<PostOpportunitySheet> {
                       style: AppTextStyles.bodyMuted,
                     ),
                     const SizedBox(height: 20),
-                    PhotoEditor(
-                      label: 'Choose event cover photo',
-                      busy: busy,
-                      reference:
-                          removePhoto ? null : widget.existing?.coverImageUrl,
-                      selected: photo,
-                      onSelected: (bytes) => setState(() {
-                        photo = bytes;
-                        removePhoto = false;
-                      }),
-                      onRemove: () => setState(() {
-                        photo = null;
-                        removePhoto = true;
-                      }),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 20),
+                      child: PhotoEditor(
+                        label: 'Choose event cover photo',
+                        busy: busy,
+                        reference:
+                            removePhoto ? null : widget.existing?.coverImageUrl,
+                        selected: photo,
+                        onSelected: (bytes) => setState(() {
+                          photo = bytes;
+                          removePhoto = false;
+                        }),
+                        onRemove: () => setState(() {
+                          photo = null;
+                          removePhoto = true;
+                        }),
+                      ),
                     ),
                     Padding(
                       padding: const EdgeInsets.only(bottom: AppSpacing.s12),

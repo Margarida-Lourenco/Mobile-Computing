@@ -67,7 +67,13 @@ class _PhotoEditorState extends State<PhotoEditor> {
                 height: 140,
                 width: double.infinity,
               ),
+            if (widget.selected != null || widget.reference != null)
+              const SizedBox(height: 12),
             OutlinedButton.icon(
+              style: OutlinedButton.styleFrom(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              ),
               onPressed: widget.busy || choosing ? null : pick,
               icon: const Icon(Icons.photo_outlined),
               label: Text(widget.label),

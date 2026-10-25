@@ -63,8 +63,7 @@ void main() {
     expect(OpportunityOrder.byDate([a, b], now).map((e) => e.id), ['a', 'b']);
   });
 
-  testWidgets(
-      'floating arrow appears near the top after scrolling and returns to zero',
+  testWidgets('floating arrow appears after one viewport and returns to zero',
       (tester) async {
     await tester.pumpWidget(const GoodTogetherApp());
     await tester.pumpAndSettle();
@@ -74,7 +73,11 @@ void main() {
             of: find.byType(CustomScrollView),
             matching: find.byType(Scrollable))
         .first);
-    scroll.position.jumpTo(scroll.position.maxScrollExtent);
+    final screenHeight = scroll.position.viewportDimension;
+    scroll.position.jumpTo(screenHeight - 1);
+    await tester.pumpAndSettle();
+    expect(find.byTooltip('Back to top'), findsNothing);
+    scroll.position.jumpTo(screenHeight);
     await tester.pumpAndSettle();
     expect(find.byTooltip('Back to top'), findsOneWidget);
     expect(tester.getTopLeft(find.byTooltip('Back to top')).dy, lessThan(30));
