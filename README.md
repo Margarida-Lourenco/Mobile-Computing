@@ -13,7 +13,6 @@ Göod Together connects residents who need a hand with neighbors who have a few 
 - [About](#-about)
 - [Sustainable Development Goals](#-sustainable-development-goals)
 - [Features](#-features)
-- [Screenshots](#-screenshots)
 - [Tech Stack](#-tech-stack)
 - [Architecture](#-architecture)
 - [Getting Started](#-getting-started)
@@ -54,13 +53,6 @@ These global goals are translated into local action by strengthening neighborhoo
 - **Browse first, log in later**: content is open to everyone, and authentication is only required for interactive or user-specific actions.
 - **Image uploads**: attach high-resolution pictures to posts.
 
-## 📱 Screenshots
-
-<!-- Replace the placeholders below with your own images, e.g. in a /docs/screenshots folder -->
-
-| Home | Map | My Page | Post |
-| :---: | :---: | :---: | :---: |
-| ![Home](docs/screenshots/home.png) | ![Map](docs/screenshots/map.png) | ![My Page](docs/screenshots/my-page.png) | ![Post](docs/screenshots/post.png) |
 
 ## 🛠 Tech Stack
 
